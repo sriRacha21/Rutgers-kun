@@ -1,0 +1,4 @@
+exports.discord_bot_secret_token = '~';
+exports.mailgun_api_key = '~';
+exports.mailgun_domain = 'mailgun.rutgersesports.com';
+exports.database_password = '';
