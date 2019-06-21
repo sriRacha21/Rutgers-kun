@@ -413,33 +413,37 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 	if( user.bot )
 		return;
 	
+	if( !settings ) {
+		Commands.getSettings( messageReaction.message, null, messageReaction, user, "messageReactionAdd", database, client );
+		return;
+	}
+
+	let log = settings.get( "server " + Constants.Settings.ISLOG );
+
 	// delete bot messages with a reaction
 	if( messageReaction.message.author.bot
 		&& messageReaction.emoji == Constants.Strings.NOENTRY
 		&& !messageReaction.message.mentions.everyone
 		&& messageReaction.message.mentions.members.array().length == 0
 		&& messageReaction.message.mentions.roles.array().length == 0 ) {
+		if( log ) {
 		let msg = messageReaction.message;
-		let auditChannel = getChannelByName( msg, Constants.Strings.AUDIT );
-		let embeds;
-		let embed = new RichEmbed()
-			.setAuthor( `Bot message deleted:`, client.user.displayAvatarURL )
-			.setTitle( `by ${user.tag}` )
-			.setColor(0xFF0000)
-			.addField( `in channel:`, msg.channel )
-			.setThumbnail( user.displayAvatarURL )
-			.setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
-		if( msg.content && msg.content.length < 1024 )
-			embed.addField( `Message contents:`, msg.content );
-		auditChannel.send( embed );
+			let auditChannel = getChannelByName( msg, Constants.Strings.AUDIT );
+			let embed = new RichEmbed()
+				.setAuthor( `Bot message deleted:`, client.user.displayAvatarURL )
+				.setTitle( `by ${user.tag}` )
+				.setColor(0xFF0000)
+				.addField( `in channel:`, msg.channel )
+				.setThumbnail( user.displayAvatarURL )
+				.setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
+			if( msg.content && msg.content.length < 1024 )
+				embed.addField( `Message contents:`, msg.content );
+			auditChannel.send( embed );
+		}
 		messageReaction.message.delete();
 		return;
 	}
 		
-	if( !settings ) {
-		Commands.getSettings( messageReaction.message, null, messageReaction, user, "messageReactionAdd", database, client );
-		return;
-	}
 
 	let prefix = settings.get( "user " + Constants.Settings.PREFIX );
 	// approve

@@ -10,8 +10,12 @@ https.get( "https://api.woofbot.io/v1/breeds", function(res) {
 	res.on('data', function(data) {
 		let woofData = JSON.parse( data );
 		if( woofData.status = "success" )
-			breeds = woofData.response.breeds;
-        Instructions.WOOFINSTRUCTION.push( breeds );
+            breeds = woofData.response.breeds;
+        let moddedBreeds = [];
+        breeds.forEach(( breed ) => {
+            moddedBreeds.push( breed.replace(" ","") );
+        });
+        Instructions.WOOFINSTRUCTION.push( moddedBreeds );
     });
 })
 
@@ -273,14 +277,6 @@ function getVoiceFiles() {
     return voiceFiles;
 }
 
-/**
- * Takes an array of commands and formats an embedded message with a list of them. An extra parameter can be passed to hide certain commands.
- *
- * @param {string[]} commandsArr - An array of strings which represent commands.
- * @param {string[]} [hidden] - An array of strings which represents commands that are intended to be hidden.
- *
- * @returns {RichEmbed} embed - An embedded message with a list of commands.
- */
 exports.arrToEmbedHelp = function( commandsArr, hidden, prefix ) {
     if( hidden === undefined || hidden == null )
         hidden = [];
