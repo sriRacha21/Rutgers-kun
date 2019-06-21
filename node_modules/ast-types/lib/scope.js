@@ -145,7 +145,10 @@ function scopePlugin(fork) {
             });
             recursiveScanChild(path.get("body"), bindings, scopeTypes);
         }
-        else if (namedTypes.TypeAlias && namedTypes.TypeAlias.check(node)) {
+        else if ((namedTypes.TypeAlias && namedTypes.TypeAlias.check(node)) ||
+            (namedTypes.InterfaceDeclaration && namedTypes.InterfaceDeclaration.check(node)) ||
+            (namedTypes.TSTypeAliasDeclaration && namedTypes.TSTypeAliasDeclaration.check(node)) ||
+            (namedTypes.TSInterfaceDeclaration && namedTypes.TSInterfaceDeclaration.check(node))) {
             addTypePattern(path.get("id"), scopeTypes);
         }
         else if (namedTypes.VariableDeclarator.check(node)) {
@@ -201,7 +204,9 @@ function scopePlugin(fork) {
             addPattern(path.get("id"), bindings);
         }
         else if (ScopeType.check(node)) {
-            if (namedTypes.CatchClause.check(node)) {
+            if (namedTypes.CatchClause.check(node) &&
+                // TODO Broaden this to accept any pattern.
+                namedTypes.Identifier.check(node.param)) {
                 var catchParamName = node.param.name;
                 var hadBinding = hasOwn.call(bindings, catchParamName);
                 // Any declarations that occur inside the catch body that do

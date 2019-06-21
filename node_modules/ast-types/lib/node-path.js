@@ -163,20 +163,22 @@ function nodePathPlugin(fork) {
                         return this.name === "object"
                             && parent.object === node;
                     case "BinaryExpression":
-                    case "LogicalExpression":
+                    case "LogicalExpression": {
+                        var n_1 = node;
                         var po = parent.operator;
-                        var pp = PRECEDENCE[po];
-                        var no = node.operator;
+                        var pp_1 = PRECEDENCE[po];
+                        var no = n_1.operator;
                         var np = PRECEDENCE[no];
-                        if (pp > np) {
+                        if (pp_1 > np) {
                             return true;
                         }
-                        if (pp === np && this.name === "right") {
-                            if (parent.right !== node) {
+                        if (pp_1 === np && this.name === "right") {
+                            if (parent.right !== n_1) {
                                 throw new Error("Nodes must be equal");
                             }
                             return true;
                         }
+                    }
                     default:
                         return false;
                 }
