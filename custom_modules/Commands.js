@@ -1406,6 +1406,8 @@ exports.quotesCommand = function( arguments, msg, database, client, prefix ) {
         });
         if( !member )
             member = msg.guild.member( arguments[0] );
+	if( !member )
+		member = msg.member;
         let outStr = "";
         let embed = new RichEmbed()
             .setAuthor(`Quotes:`, client.user.displayAvatarURL )
