@@ -952,6 +952,7 @@ public class temp {
             try {
                 command += `python ${filename}`;
                 outString += `Running: \`${command}\`\n`
+                execSync( `chmod -w ${filename}` );
                 output = execSync( command );
             } catch (err) {
                 output = err.stderr;
