@@ -100,15 +100,6 @@ client.on( 'message', (receivedMessage, settings) => {
     if( receivedMessage.author == client.user || receivedMessage.author.bot )
 		return;
 
-	// Check if user is in #agreement channel first
-	// this happens before processCommand because we only want the user to be able to use !agree
-	// if they are in the agreement channel
-	if( receivedMessage.channel.name == Constants.Strings.AGREEMENT ) {
-		receivedMessage.delete();
-		processCommand( receivedMessage );
-		return;
-	}
-
 	// this block is for the email verification stuff.
 	if( receivedMessage.channel.type == 'dm' ) {
 		if( receivedMessage.content.endsWith( Constants.Strings.SCHOOL.toLowerCase() + ".edu" )  )
@@ -128,6 +119,15 @@ client.on( 'message', (receivedMessage, settings) => {
 	let prefix = settings.get( "user " + Constants.Settings.PREFIX );
 	let isChain = settings.get( "server " + Constants.Settings.ISCHAIN );
 	let disabledCommands = settings.get( "command: " );
+
+	// Check if user is in #agreement channel first
+	// this happens before processCommand because we only want the user to be able to use !agree
+	// if they are in the agreement channel
+	if( receivedMessage.channel.name == Constants.Strings.AGREEMENT ) {
+		receivedMessage.delete();
+		processCommand( receivedMessage, settings );
+		return;
+	}
 
 	// auto add reactions to messages in votes channel
 	if( receivedMessage.channel.name == Constants.Strings.VOTES ) {
@@ -735,7 +735,13 @@ rl.on('line', (input) => {
  * Processes commands. This function is called when a message starting with the prefix is seen.
  * @param {string} receivedMessage - A message sent to any channel in any server that starts with the prefix, Constants.Strings.PREFIX
  */
+
 function processCommand( receivedMessage, htSettings ) {
+	let prefix = htSettings.get( "user " + Constants.Settings.PREFIX );
+	let disabledCommands = htSettings.get( "server command: " );
+	if( disabledCommands.includes(Constants.Commands.EXECUTE) )
+		disabledCommands.push( Constants.CommandSynonyms.EXEC );
+	
 	// get second to last message
 	let secondToLastMessage = htSecondToLastMessages.get( receivedMessage.author.id );
 	// remove prefix
@@ -744,7 +750,7 @@ function processCommand( receivedMessage, htSettings ) {
 	if( mentioned )
 		fullCommand = receivedMessage.content.substr( client.user.id.length+4 )
 	else
-		fullCommand = receivedMessage.content.substr(1);
+		fullCommand = receivedMessage.content.substr(prefix.length);
     // split command into pieces
     let splitCommand = fullCommand.split(" ")
     // the first command in the split command is the name of the command
@@ -772,10 +778,7 @@ function processCommand( receivedMessage, htSettings ) {
 			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, argumentCommandsRemovePunctuation, receivedMessage, htNewMembers, 1 );
 		return;
 	}
-
-	let prefix = htSettings.get( "user " + Constants.Settings.PREFIX );
-	let disabledCommands = htSettings.get( "server command: " );
-
+	
 	if( !receivedMessage.member.hasPermission(Constants.Permissions.ADMIN) && disabledCommands.includes(command) ) {
 		receivedMessage.channel.send( `The command \`${prefix+command}\` is disabled.`)
 		return;

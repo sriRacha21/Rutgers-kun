@@ -917,7 +917,8 @@ exports.executeCommand = async function( arguments, msg, execSync, client, prefi
     let code = arguments.slice(1).join(" ");
     let outString = "";
     let command = "timeout 5s ";
-    if( code.includes("```") ) {
+    if( msg.content.includes("```") ) {
+        code = arguments.slice(0).join(" ");
         let parts = arguments.join(" ").split("\n");
         language = parts[0];
         code = parts.slice(2, parts.length-1).join("\n");
@@ -1945,6 +1946,10 @@ exports.settingsCommand = function( arguments, msg, database, client, prefix, ht
                 if( result )
                     embed.addField( `${result.name}:`, result.options );
             })
+            results.forEach(( result ) => {
+                if( result.name.startsWith( "command: " ) )
+                    embed.addField( `${result.name}:`, result.options );
+            })
             Constants.SettingsArr.forEach(( setting ) => {
                 let hasField = false;
                 embed.fields.forEach(( field ) => {
@@ -2267,7 +2272,8 @@ function calcMilliseconds( weeks, days, hours, minutes, seconds ) {
 function sendWelcomeMessage( member ) {
     let welcomeChannel = exports.getChannelByNameGuild( member.guild, Constants.Strings.GENERAL );
     let botCommandsChannel = exports.getChannelByNameGuild( member.guild, Constants.Strings.BOTCOMMANDS );
-    welcomeChannel.send( Constants.Strings.WELCOMEMESSAGE + member + Constants.Strings.WELCOMEMESSAGEEND + botCommandsChannel + Constants.Strings.WELCOMEMESSAGEEND2 );
+    let getrolesChannel = exports.getChannelByNameGuild( member.guild, "getroles" );
+    welcomeChannel.send( Constants.Strings.WELCOMEMESSAGE + member + Constants.Strings.WELCOMEMESSAGEEND + getrolesChannel + Constants.Strings.WELCOMEMESSAGEEND2 );
 }
 
 /**
