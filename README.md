@@ -1,5 +1,5 @@
 # Rutgers Esports Discord Bot
-This is the Bitbucket/Github Repository for the Rutgers Esports Discord Bot, whose rewrite done!
+This is the Bitbucket/Github Repository for the Rutgers Esports Discord Bot, whose rewrite is done!
 
 ### WHAT DO I DO?
 Rutgers Esports Discord bot is a bot specially made for Rutgers Esports Discord. It has the ability to:
