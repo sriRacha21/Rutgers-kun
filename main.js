@@ -7,7 +7,7 @@
  * @requires custom_modules/constants.js:Constants
  */
 
-// EXPERIMENTAL BRANCH?
+// EXPERIMENTAL BOT USER?
 const EXPERIMENTAL = true;
 
 // imports
@@ -23,11 +23,12 @@ const DEBUG = Constants.DEBUG;
 const Commands = require( './custom_modules/Commands.js' )
 var API_Keys = EXPERIMENTAL ? require( './custom_modules/API_keys_experimental.js') : require('./custom_modules/API_keys.js');
 const Help = require('./custom_modules/Help.js');
-const mg = require('mailgun-js');
-const Mailgun = require('mailgun-js')({
-	apiKey: API_Keys.mailgun_api_key,
-	domain: API_Keys.mailgun_domain
-});
+// const Mailgun = require('mailgun-js')({
+// 	apiKey: API_Keys.mailgun_api_key,
+// 	domain: API_Keys.mailgun_domain
+// });
+const mg = require('mailgun').Mailgun;
+const Mailgun = new mg(API_Keys.mailgun_api_key);
 const readline = require('readline');
 const rl = readline.createInterface({
 	input: process.stdin,
@@ -85,7 +86,6 @@ client.on('ready', async () => {
 	if( database ) console.log( `Database connection established` );
 	let access_token;
 	let uriToPost = `https://id.twitch.tv/oauth2/token?client_id=${API_Keys.twitch_client_id}&client_secret=${API_Keys.twitch_client_secret}&grant_type=client_credentials&scope=user_read+channel_read`;
-	// console.log( "POST: " + uriToPost );
 	request({
 		uri: uriToPost,
 		method: "POST",
@@ -104,20 +104,14 @@ client.on( 'message', (receivedMessage, settings) => {
     if( receivedMessage.author == client.user || receivedMessage.author.bot )
 		return;
 
-	// settings that update per message
-	if( !settings ) {
-		Commands.getSettings( receivedMessage, null, null, null, "message", database, client );
-		return;
-	}
-	let prefix = settings.get( "user " + Constants.Settings.PREFIX );
-	let isChain = settings.get( "server " + Constants.Settings.ISCHAIN );
-	let disabledCommands = settings.get( "command: " );
-
 	// Check if user is in #agreement channel first
 	// this happens before processCommand because we only want the user to be able to use !agree
 	// if they are in the agreement channel
-	if( receivedMessage.channel.name == Constants.Strings.AGREEMENT )
+	if( receivedMessage.channel.name == Constants.Strings.AGREEMENT ) {
 		receivedMessage.delete();
+		processCommand( receivedMessage );
+		return;
+	}
 
 	// this block is for the email verification stuff.
 	if( receivedMessage.channel.type == 'dm' ) {
@@ -129,6 +123,15 @@ client.on( 'message', (receivedMessage, settings) => {
 			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 3 );
 		return;
 	}
+
+	// settings that update per message
+	if( !settings ) {
+		Commands.getSettings( receivedMessage, null, null, null, "message", database, client );
+		return;
+	}
+	let prefix = settings.get( "user " + Constants.Settings.PREFIX );
+	let isChain = settings.get( "server " + Constants.Settings.ISCHAIN );
+	let disabledCommands = settings.get( "command: " );
 
 	// auto add reactions to messages in votes channel
 	if( receivedMessage.channel.name == Constants.Strings.VOTES ) {
@@ -516,6 +519,7 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 		});
 	}
 	let value = htAccept.get( messageReaction.message.id );
+	let member = messageReaction.message.member;
 	// sounds
 	if( value !== undefined
 		&& typeof value === "object"
@@ -553,9 +557,50 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 				messageReaction.remove( user );
 			}
 	}
+	value = htAccept.get( "emote " + messageReaction.message.id );
+	// emotes
+	if( value !== undefined
+		&& typeof value === "object"
+		&& messageReaction.emoji == Constants.Strings.THUMBSUP
+		&& user != client.user ) {
+		if( member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
+			let message = value;
+			let userS = message.author;
+			let filename;
+			message.attachments.forEach(( attachment ) => {
+				filename = attachment.filename;
+			});
+			let name = ":" + filename.match(/[^.]*/g)[0] + ":";
+			Commands.addEmoteCommand( [], value, htAccept, true, client );
+			userS.send( Constants.Strings.EMOTEADDSUCCESS + name );
+			htAccept.remove( "emote " + messageReaction.message.id );
+		} else {
+			user.send( Constants.Strings.NOPERMREACTIONWARN );
+			messageReaction.remove( user );
+		}
+	} else if ( value !== undefined
+		&& typeof value === "object"
+		&& messageReaction.emoji == Constants.Strings.THUMBSDOWN
+		&& user != client.user ) {
+			if( member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
+				let message = htAccept.get( "emote " + messageReaction.message.id );
+				let userS = message.author;
+				let filename;
+				message.attachments.forEach(( attachment ) => {
+					filename = attachment.filename;
+				});
+				let name = ":" + filename.match(/[^.]*/g)[0] + ":";
+				userS.send( Constants.Strings.EMOTEADDFAILURE + name );
+				htAccept.remove( "emote " + messageReaction.message.id );
+			} else {
+				user.send( Constants.Strings.NOPERMREACTIONWARN );
+				messageReaction.remove( user );
+			}
+	}
 
 	let vote = settings.get( "server " + Constants.Settings.VOTE );
-	console.log( `vote: ${vote}`)
+	if( DEBUG )
+		console.log( `vote: ${vote}`)
 	if( vote ) {
 		//////////////////// VOTE STUFF //////////////////////
 		// find votes channel and set vars
@@ -594,7 +639,8 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 				messageReaction.remove( user );
 				return;
 			}
-			console.log( "Remembered users: " + htVotes.get( messageReaction.message.id + "users" ) );
+			if( DEBUG )
+				console.log( "Remembered users: " + htVotes.get( messageReaction.message.id + "users" ) );
 
 			// save counts
 			if( messageReaction.emoji == Constants.Strings.THUMBSUP ) {
@@ -662,7 +708,8 @@ client.on( "messageReactionRemove", (messageReaction, user) => {
 			htVotes.put( messageReaction.message.id + "count", htVotes.get( messageReaction.message.id + "count" ) - 1 );
 		if( messageReaction.emoji == Constants.Strings.THUMBSDOWN )
 			htVotes.put( messageReaction.message.id + "countdown", htVotes.get( messageReaction.message.id + "countdown" ) - 1 )
-		console.log( "Remembered users: " + htVotes.get( messageReaction.message.id + "users" ) );
+		if( DEBUG )
+			console.log( "Remembered users: " + htVotes.get( messageReaction.message.id + "users" ) );
 	} else if( messageReaction.message.channel.name == Constants.Strings.VOTES
 		&& !htVotes.get( messageReaction.message.id ) )
 			user.send( Constants.Strings.VOTEINVALID );
@@ -688,7 +735,8 @@ client.on( "voiceStateUpdate", (oldMember, newMember) => {
 			// found that voiceChannel has voice role with read perms on
 			if( permission.allow == 1024 ) {
 				let numMessages = voiceChannel.messages.array().length;
-				console.log( `deleting ${numMessages} messages` );
+				if( DEBUG )
+					console.log( `deleting ${numMessages} messages` );
 				voiceChannel.bulkDelete( numMessages );
 			}
 		}
@@ -857,6 +905,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.COMMAND:
 			Commands.commandCommand( argumentCommandsClean, receivedMessage, mysql, database, prefix, client, EmojiConvertor );
 			break;
+		case Constants.Commands.ADDEMOTE:
+			Commands.addEmoteCommand( argumentCommands, receivedMessage, htAccept, false, client, prefix );
+			return;
 		case Constants.Commands.GIVEPERMSALL:
 			Commands.givePermsAllCommand( argumentCommands, receivedMessage );
 			break;
@@ -912,7 +963,7 @@ function processCommand( receivedMessage, htSettings ) {
                 processCommand( secondToLastMessage, htSettings );
 			break;
 		default:
-			let query = `SELECT message FROM commands WHERE name=\'${command}\' AND request_id=0`;
+			let query = `SELECT message FROM commands WHERE name=\'${command}\' AND request_id=0  AND server_id=${receivedMessage.guild.id}`;
 			if( DEBUG )
 				console.log( "built query: " + query );
 			database.query( query, function(err, results) {
@@ -971,15 +1022,14 @@ function numToEmoteArray( num ) {
 	for( let i = 0; i < numArr.length; i++ )
 		for( let j = 0; j < numArr.length; j++ )
 			if( i != j && numArr[i] == numArr[j] ) {
-				console.log( "defaulted on chain; duplicate found" );
+				if( DEBUG )
+					console.log( "defaulted on chain; duplicate found" );
 				emoteArray.push( Constants.Strings.DEFAULT );
 				return emoteArray;
 			}
 	numArr.forEach(( numTemp ) => {
 		numTemp = +numTemp;
 		let emoteToPush;
-		// console.log( "numTemp: " + numTemp );
-		// console.log( "typeof: " + typeof numTemp );
 		switch( numTemp ) {
 			case 0: emoteToPush = Constants.Strings.ZERO; break;
 			case 1: emoteToPush = Constants.Strings.ONE; break;

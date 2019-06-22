@@ -20,6 +20,7 @@ exports.Commands = {
     ADDSOUND: "addsound",
     LEAVE: "leave",
     COMMAND: "command",
+    ADDEMOTE: "addemote",
     GIVEPERMSALL: "givepermsall",
     LISTADMINCOMMANDS: "listadmincommands",
     QUOTE: "quote",
@@ -71,6 +72,7 @@ exports.CommandsArray = [
     this.Commands.ADDSOUND,
     this.Commands.LEAVE,
     this.Commands.COMMAND,
+    this.Commands.ADDEMOTE,
     this.Commands.GIVEPERMSALL,
     this.Commands.LISTADMINCOMMANDS,
     this.Commands.QUOTE,
@@ -128,8 +130,8 @@ exports.Permissions = {
 }
 
 exports.ManagedServers = [
-    143013824679641088,
-    291367115565301763,
+    143013824679641088, //red
+    291367115565301763, //redb env
 ]
 
 exports.eightBallResponses = [
@@ -179,6 +181,8 @@ exports.Strings = {
     COMMANDADDFAILURE: "Your command has not been approved: ",
     SOUNDADDSUCCESS: "Sound successfully added: ",
     SOUNDADDFAILURE: "Your sound has not been approved: ",
+    EMOTEADDSUCCESS: "Your emote has been successfully added: ",
+    EMOTEADDFAILURE: "Your emote has not been approved: ",
     COMMANDDELETESUCCESS: "Command successfully deleted: !",
     QUOTEADDSUCCESS: "Quote successfully added for user: ",
     QUOTECOUNT: "_Quote #",
@@ -255,7 +259,9 @@ exports.Strings = {
     EMCOMMANDNAME: "Command name:",
     EMCOMMANDMSG: "Message: ",
     EMSOUNDADD: "Sound add attempt:",
+    EMEMOTEADD: "Emote add attempt:",
     EMSOUNDFILENAME: "Filename:",
+    EMEMOTENAME: "Emote name:",
 
     // ARGUMENTS
     ADDROLE: "add",
@@ -310,6 +316,7 @@ exports.Strings = {
     NOPERMREACTIONWARN: "Your reaction has not been processed because you must be Moderator or higher to approve commands.",
     NOTMANAGEDSERVERWARN: "This command has been turned off because this server is unmanaged.",
     NEEDATTACHMENTWARN: "You need to attach a .mp3 file that is <25MB to this command.",
+    NEEDATTACHMENTEMOTEWARN: "You need to attach an image file that is <256 KB.",
     NOTMODVOTEWARN: "You must be a moderator or higher to vote. Sorry :(",
     USERNOTFOUNDWARN: "User could not be found.",
     INVALIDTIMESTRING: "You passed an invalid time string. Make sure your time string is formatted as: `Aw Bd Xh Ym Zs`. All fields but one are mandatory.",
@@ -389,7 +396,7 @@ exports.Strings = {
     VOICEROLE: "VOICE",
 
     // EMAIL FIELDS
-    REQUESTEMAIL: "Please enter your \"@scarletmail.rutgers.edu\" email to start the verification process. This email starts with your netID. Make sure your response includes \"@scarletmail.rutgers.edu\".",
+    REQUESTEMAIL: "Please enter your \"@scarletmail.rutgers.edu\" email to start the verification process. This email starts with your netID. **Do NOT enter an email that does is not formatted as yournetID1234@scarletmail.rutgers.edu, or the email will not send.**.",
     FROMNAME: "Rutgers Esports",
     SENDER: "rutgersesports",
     SUBJECT: "Verify your Rutgers Student role in Rutgers Esports Discord!",

@@ -74,7 +74,7 @@ Instructions = {
     FILTERINSTRUCTION: ["Filter a certain word for a certain amount of time.",
         "filter <add/remove/list> word <number><w/d/h/m/s>",
         "Moderator",
-        null,
+        ["unfilter","filters"],
         null,
         ["add","remove","list"]],
     WARNINSTRUCTION: ["Warn members with this command. The bot will send them a message containing the offending message, the rule they broke, and notes if there are any attached with the command.",

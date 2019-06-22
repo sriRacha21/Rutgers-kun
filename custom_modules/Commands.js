@@ -704,14 +704,14 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
             msg.author.send( Constants.Strings.NOTCOMPLETEDPASTSTEP );
             return;
         }
-        let from = Constants.Strings.FROMNAME + " <" +Constants.Strings.SENDER + "@" + domain + ">";
+        // let from = Constants.Strings.FROMNAME + " <" + Constants.Strings.SENDER + "@" + domain + ">";
+        let from = `${Constants.Strings.SENDER}@${domain}`;
         let to = msg.content;
         let subject = Constants.Strings.SUBJECT;
         let code = generateRandom( 0, 999999 );
         htCodes.put( msg.author.id, code );
         let text = Constants.Strings.TEXT + code;
-        sendEmail( mailgun, from, to, subject, text );
-        msg.author.send( Constants.Strings.EMAILSENT );
+        sendEmail( msg, mailgun, from, to, subject, text );
     } else if( part == 3 ) {
         if( htMembers.get( msg.author.id ) === undefined || htCodes.get( msg.author.id ) === undefined ) {
             msg.author.send( Constants.Strings.NOTCOMPLETEDPASTSTEP );
@@ -1042,6 +1042,7 @@ exports.addSoundCommand = function( arguments, msg, htAccept, adding, client, pr
                         .setTitle( msg.author.tag )
                         .setColor(0xFF0000)
                         .addField( Constants.Strings.EMSOUNDFILENAME, attachment.filename )
+                        .addField( "File URL:", attachment.proxyURL )
                         .setThumbnail( msg.author.displayAvatarURL )
                         .setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
                     botoutputChannel.send( embed )
@@ -1067,6 +1068,51 @@ exports.leaveCommand = function( arguments, msg ) {
     }
     msg.guild.me.voiceChannel.leave();
     msg.react( Constants.Strings.WAVE );
+}
+
+exports.addEmoteCommand = function( arguments, msg, htAccept, adding, client, prefix ) {
+    if( arguments.length > 0 ) {
+        Help.helpCommand( [Constants.Commands.ADDSOUND], msg, false, client, prefix );
+    } else {
+        let ranOnce = false;
+        let warnFilesizeEmote = false;
+        msg.attachments.forEach(( attachment ) => {
+            if( ranOnce )
+                return;
+
+            ranOnce = true;
+            if( attachment.filesize > 256000 )
+                warnFilesizeEmote = true;
+            else {
+                if( !exports.isManagedServer( msg.guild ) || msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) || adding ) {
+                    let file = attachment.proxyURL;
+                    let filename = attachment.filename.match(/[^.]*/g)[0];
+                    msg.guild.createEmoji(file, filename);
+                    msg.react( Constants.Strings.THUMBSUP );
+                } else {
+                    msg.react( Constants.Strings.THINK );
+                    let botoutputChannel = getChannelByName( msg, Constants.Strings.BOTOUTPUT );
+                    let embed = new RichEmbed()
+                        .setAuthor( Constants.Strings.EMEMOTEADD, client.user.displayAvatarURL )
+                        .setTitle( msg.author.tag )
+                        .setColor(0xFF0000)
+                        .addField( Constants.Strings.EMEMOTENAME, attachment.filename.match(/[^.]*/g)[0] )
+                        .setThumbnail( msg.author.displayAvatarURL )
+                        .setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
+                    botoutputChannel.send( embed )
+                    .then( message => {
+                        htAccept.put( "emote " + message.id, msg );
+                        message.react( Constants.Strings.THUMBSUP );
+                        message.react( Constants.Strings.THUMBSDOWN );
+                    });
+                }
+            }
+        });
+        if( !ranOnce || warnFilesizeEmote ) {
+            msg.channel.send( Constants.Strings.NEEDATTACHMENTEMOTEWARN );
+            return;
+        }
+    }
 }
 
 /**
@@ -2293,19 +2339,36 @@ exports.isRunnable = function( msg ) {
  * @param {string} subject - The subject of the email.
  * @param {string} text - The body of the email.
  */
-function sendEmail( mailgun, from, to, subject, text ) {
+function sendEmail( msg, mailgun, from, to, subject, text ) {
     let data = {
         from: from,
         to: to,
         subject: subject,
         text: text
     };
-    mailgun.messages().send( data, function( error, body ) {
+    // mailgun.messages().send( data, function( error, body ) {
+    //     if( error ) {
+    //         console.log( "error: " + error );
+    //         return;
+    //     }
+        // console.log( "Attempting to send email with following fields:\n" +
+        //     "from: " + from + "\n" +
+        //     "to: " + to + "\n" +
+        //     "subject: " + subject + "\n" +
+        //     "text: " + text + "\n" );
+    // });
+    mailgun.sendText( from, to, subject, text, function(err) {
+        if( err ) {
+            msg.author.send( "Failed to send email." );
+            console.log( err );
+            return;
+        }
         console.log( "Attempting to send email with following fields:\n" +
             "from: " + from + "\n" +
             "to: " + to + "\n" +
             "subject: " + subject + "\n" +
-            "text: " + text + "\n" );
+            "text: " + text );
+        msg.author.send( Constants.Strings.EMAILSENT ); 
     });
 }
 
