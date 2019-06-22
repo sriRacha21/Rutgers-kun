@@ -1,5 +1,5 @@
 # Rutgers Esports Discord Bot
-This is the Bitbucket/Github Repository for the Rutgers Esports Discord Bot, whose rewrite is almost done.
+This is the Bitbucket/Github Repository for the Rutgers Esports Discord Bot, whose rewrite done!
 
 ### WHAT DO I DO?
 Rutgers Esports Discord bot is a bot specially made for Rutgers Esports Discord. It has the ability to:
@@ -62,11 +62,11 @@ Rutgers Esports Discord bot is a bot specially made for Rutgers Esports Discord.
 - [x] Handle votes in REEBO
 - [x] implement blind voting
 - [x] dont let users delete certain bot messages
-- [ ] vote for emotes
+- [x] vote for emotes
 
 ### HOW TO USE
 1. Clone project into a folder somewhere (hopefully a server that will always be running)
-2. `npm install hashtable discordjs mailgun`
+2. `npm install hashtable discord.js mailgun requests` This is not a full list of dependencies yet.
 3. Move `custom_modules/API_keys.js.dist` to `custom_modules/API_keys.js` and fill out API keys.
 4. Navigate to the cloned folder and run `node main.js`
 

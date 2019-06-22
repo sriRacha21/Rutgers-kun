@@ -2056,7 +2056,8 @@ exports.whoamiCommand = function( arguments, msg, client ) {
         .setTitle(`I'm ${client.user.username}!`)
         .setDescription( Constants.Strings.WHOAMIDESCRIPTION )
         .setColor(0xFF0000)
-        .addField( Constants.Strings.PROGRAMMER, Constants.Strings.PROGRAMMERDESCRIPTION );
+        .addField( Constants.Strings.PROGRAMMER, Constants.Strings.PROGRAMMERDESCRIPTION )
+        .addField( "I'm open source!", "I'm hosted at https://github.com/sriRacha21/Rutgers-kun" );
 
     let creditsField = "API for woof command by ";
     if( msg.guild.member( Constants.Strings.JOEYID ) )

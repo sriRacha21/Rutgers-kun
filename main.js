@@ -8,7 +8,7 @@
  */
 
 // EXPERIMENTAL BOT USER?
-const EXPERIMENTAL = true;
+const EXPERIMENTAL = false;
 
 // imports
 const Discord = require('discord.js')
@@ -23,10 +23,6 @@ const DEBUG = Constants.DEBUG;
 const Commands = require( './custom_modules/Commands.js' )
 var API_Keys = EXPERIMENTAL ? require( './custom_modules/API_keys_experimental.js') : require('./custom_modules/API_keys.js');
 const Help = require('./custom_modules/Help.js');
-// const Mailgun = require('mailgun-js')({
-// 	apiKey: API_Keys.mailgun_api_key,
-// 	domain: API_Keys.mailgun_domain
-// });
 const mg = require('mailgun').Mailgun;
 const Mailgun = new mg(API_Keys.mailgun_api_key);
 const readline = require('readline');
@@ -1046,7 +1042,7 @@ async function generatePresence( which ) {
 	}
 	let presence = new Discord.Game(data,client.user.presence);
 	let hours = 0;
-	let minutes = 1;
+	let minutes = 2;
 	let seconds = 0;
 	let milliseconds = hours*3600000 + minutes*60000 + seconds*1000;
 	client.user.setPresence({ game: presence });
