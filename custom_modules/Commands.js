@@ -27,6 +27,8 @@ const https = require('https');
 const fs = require('fs');
 // util
 const util = require('util');
+// filterwords
+exports.filterWords = [];
 
 // This global variables stops !giveallperms from being run more than once in one instance.
 var allPermsGiven = false;
@@ -1023,7 +1025,7 @@ exports.addSoundCommand = function( arguments, msg, htAccept, adding, client, pr
             ranOnce = true;
             if( !attachment.filename.endsWith( ".mp3" ) )
                 warnFilename = true;
-            else if( attachment.filesize > 2500000 )
+            else if( attachment.filesize > 25000000 )
                 warnFilesize = true;
             else {
                 if( !exports.isManagedServer( msg.guild ) || msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) || adding ) {
@@ -1459,7 +1461,7 @@ exports.queryCommand = function( arguments, msg, database, client, prefix ) {
     }
 }
 
-exports.filterCommand = function( arguments, msg, filterWords, client, prefix ) {
+exports.filterCommand = function( arguments, msg, client, prefix ) {
     if( !exports.isManagedServer( msg.guild ) ) {
         msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
         return;
@@ -1470,12 +1472,15 @@ exports.filterCommand = function( arguments, msg, filterWords, client, prefix ) 
         return;
     }
 
+    if( arguments[0].length > 0 && (arguments[0] != "add" && arguments[0] != "remove" && arguments[0] != "list") )
+        arguments.unshift("add");
+
     if( arguments[0] == "add" ) {
         arguments = arguments.slice( 1 );
         if( arguments.length < 2 || arguments.length > 3 ) {
             Help.helpCommand( [Constants.Commands.FILTER], msg, false, client, prefix );
         } else {
-            filterWords.push( arguments[0] );
+            exports.filterWords.push( arguments[0] );
             let argsForUnfilter = [];
             argsForUnfilter.push( arguments[0] );
             arguments = arguments.slice( 1, arguments.length )
@@ -1492,7 +1497,7 @@ exports.filterCommand = function( arguments, msg, filterWords, client, prefix ) 
             let seconds = timeArr[4];
             
             let milliseconds = calcMilliseconds( weeks, days, hours, minutes, seconds );
-            let time = setTimeout( exports.unfilterCommand, milliseconds, argsForUnfilter, msg, filterWords );
+            let time = setTimeout( exports.unfilterCommand, milliseconds, argsForUnfilter, msg );
             htFilteredWords.put( argsForUnfilter[0], time );
             let durationString = buildDurationString( weeks, days, hours, minutes, seconds );
 
@@ -1500,15 +1505,15 @@ exports.filterCommand = function( arguments, msg, filterWords, client, prefix ) 
         }
     } else if( arguments[0] == "remove" ) {
         arguments = arguments.slice( 1 );
-        exports.unfilterCommand( arguments, msg, filterWords, client, prefix )
+        exports.unfilterCommand( arguments, msg, client, prefix )
     } else if( arguments[0] == "list" ) {
         arguments = arguments.slice( 1 );
-        exports.filtersCommand( arguments, msg, filterWords, client, prefix );
+        exports.filtersCommand( arguments, msg, client, prefix );
     } else
         Help.helpCommand( [Constants.Commands.FILTER], msg, false, client, prefix );
 }
 
-exports.unfilterCommand = function( arguments, msg, filterWords, client, prefix ) {
+exports.unfilterCommand = function( arguments, msg, client, prefix ) {
     if( !exports.isManagedServer( msg.guild ) ) {
         msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
         return;
@@ -1523,8 +1528,8 @@ exports.unfilterCommand = function( arguments, msg, filterWords, client, prefix 
         Help.helpCommand( [Constants.Commands.FILTER], msg, false, client, prefix );
     else {
         let wordFound = false;
-        for( let i = 0; i < filterWords.length; i++ ) {
-            if( filterWords[i] == arguments[0] )
+        for( let i = 0; i < exports.filterWords.length; i++ ) {
+            if( exports.filterWords[i] == arguments[0] )
                 wordFound = true;
         }
         if( !wordFound ) {
@@ -1532,7 +1537,9 @@ exports.unfilterCommand = function( arguments, msg, filterWords, client, prefix 
             return;
         }
 
-        filterWords = filterWords.filter( word => word != arguments[0] );
+        console.log( "filters before " + exports.filterWords );
+        exports.filterWords = exports.filterWords.filter( word => word != arguments[0] );
+        console.log( "filters after " + exports.filterWords );
 
         let timer = htFilteredWords.get( arguments[0] );
         clearTimeout( timer );
@@ -1541,7 +1548,7 @@ exports.unfilterCommand = function( arguments, msg, filterWords, client, prefix 
     }
 }
 
-exports.filtersCommand = function( arguments, msg, filterWords, client, prefix ) {
+exports.filtersCommand = function( arguments, msg, client, prefix ) {
     if( !exports.isManagedServer( msg.guild ) ) {
         msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
         return;
@@ -1551,10 +1558,12 @@ exports.filtersCommand = function( arguments, msg, filterWords, client, prefix )
         msg.react( Constants.Strings.EYEROLL );
         return;
     }
+
+    console.log( "filters " + exports.filterWords );
     
     let retString = "";
-    for( let i = 0; i < filterWords.length; i++ ) {
-        let filterWord = filterWords[i];
+    for( let i = 0; i < exports.filterWords.length; i++ ) {
+        let filterWord = exports.filterWords[i];
         retString += filterWord + "\n";
     }
     let embed = new RichEmbed()

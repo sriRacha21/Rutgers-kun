@@ -223,7 +223,6 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
 }
 
 function generateCommandField( embed, instructionArr, prefix ) {
-    console.log( instructionArr );
     let regex = /\[prefix\]/g;
     let instruction = instructionArr[0];
     let format = instructionArr[1];

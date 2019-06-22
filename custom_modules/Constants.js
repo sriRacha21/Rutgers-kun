@@ -50,6 +50,8 @@ exports.CommandSynonyms = {
     REMOVE: "remove",
     LIST: "list",
     EXEC: "exec",
+    UNFILTER: "unfilter",
+    FILTERS: "filters",
 }
 
 exports.CommandsArray = [

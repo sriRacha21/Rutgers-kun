@@ -54,7 +54,7 @@ const htChainMessages = new HashTable();
 const htIgnoredUsers = new HashTable();
 const htVotes = new HashTable();
 // word filtering
-var filterWords = [];
+var filterWords = Commands.filterWords;
 // count lines
 const execSync = require('child_process').execSync;
 // emoji stuff
@@ -103,7 +103,7 @@ client.on( 'message', (receivedMessage, settings) => {
     // This stops the bot from replying to itself or other bots
     if( receivedMessage.author == client.user || receivedMessage.author.bot )
 		return;
-	
+
 	// settings that update per message
 	if( !settings ) {
 		Commands.getSettings( receivedMessage, null, null, null, "message", database, client );
@@ -180,10 +180,12 @@ client.on( 'message', (receivedMessage, settings) => {
 	}
 
 	// word filtering
-	if( Commands.isManagedServer( receivedMessage.guild ) && !receivedMessage.member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
+	if( Commands.isManagedServer( receivedMessage.guild ) ) {
 		for( let i = 0; i < filterWords.length; i++ ) {
 			filterWord = filterWords[i];
-			if( receivedMessage.content.toLowerCase().search( filterWord ) != -1 ) {
+			if( receivedMessage.content.toLowerCase().search( filterWord ) != -1 && receivedMessage.member.hasPermission( Constants.Permissions.KICKMEMBERS ) )
+				receivedMessage.react( Constants.Strings.FIRE );
+			else if( receivedMessage.content.toLowerCase().search( filterWord ) != -1 ) {
 				receivedMessage.delete();
 				let auditChannel = getChannelByName( receivedMessage, Constants.Strings.AUDIT );
 				auditChannel.send( Constants.Strings.FILTEREDWORDCAUGHT );
@@ -872,8 +874,14 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.QUERY:
 			Commands.queryCommand( argumentCommands, receivedMessage, database, client, prefix );
 			break;
+		case Constants.CommandSynonyms.UNFILTER:
+			argumentCommands.unshift("remove");
+			Commands.filterCommand( argumentCommands, receivedMessage, client, prefix );
+			break;
+		case Constants.CommandSynonyms.FILTERS:
+			argumentCommands.unshift("list");
 		case Constants.Commands.FILTER:
-			Commands.filterCommand( argumentCommands, receivedMessage, filterWords, client, prefix );
+			Commands.filterCommand( argumentCommands, receivedMessage, client, prefix );
 			break;
 		case Constants.Commands.WARN:
 			Commands.warnCommand( fullCommand.split(Constants.Strings.COMMANDSPLITTER), receivedMessage, client, mysql, database, prefix );
