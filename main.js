@@ -715,34 +715,6 @@ client.on( "messageReactionRemove", (messageReaction, user) => {
 			user.send( Constants.Strings.VOTEINVALID );
 })
 
-client.on( "voiceStateUpdate", (oldMember, newMember) => {
-	if( !Commands.isManagedServer( newMember.guild ) )
-		return;
-	
-	if( !oldMember.voiceChannel && newMember.voiceChannel )
-		newMember.addRole( Commands.getRoleByNameGuild( newMember.guild, Constants.Strings.VOICEROLE ) );
-	if( oldMember.voiceChannel && !newMember.voiceChannel ) {
-		newMember.removeRole( Commands.getRoleByNameGuild( newMember.guild, Constants.Strings.VOICEROLE ) );
-		if( oldMember.voiceChannel.members.array().length == 0 ) {
-			let category = oldMember.voiceChannel.parent;
-			let voiceChannel = category.children.find( 'name', 'voice' );
-			if( !voiceChannel ) {
-				console.log( "voice channel could not be found" );
-				return;
-			}
-			let role = oldMember.guild.roles.find( 'name', 'VOICE' );
-			let permission = voiceChannel.permissionOverwrites.find( 'id', role.id )
-			// found that voiceChannel has voice role with read perms on
-			if( permission.allow == 1024 ) {
-				let numMessages = voiceChannel.messages.array().length;
-				if( DEBUG )
-					console.log( `deleting ${numMessages} messages` );
-				voiceChannel.bulkDelete( numMessages );
-			}
-		}
-	}
-});
-
 client.on( "error", (error) => {
 	console.log( "Error encountered: " + error );
 });
