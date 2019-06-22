@@ -1688,19 +1688,20 @@ exports.warnCommand = function( arguments, msg, client, mysql, database, prefix 
                     results.forEach(( result ) => {
                         rulesTexts.push(result.text);
                     });
+                    console.log( rulesTexts );
                     
                     // DM user regarding infraction
                     let dmText = Constants.Strings.WARNINGMESSAGE + "\n\n**__Details:__**\n__Rule(s) Broken:__\n";
                     for( let i = 0; i < ruleNumbers.length; i++ ) {
                         let ruleNumber = ruleNumbers[i];
-                        dmText += "**Rule #" + ruleNumber + ":** " + rulesTexts[ruleNumber-1] + "\n";
+                        dmText += "**Rule #" + ruleNumber + ":** " + rulesTexts[i] + "\n";
                     }
                     dmText += Constants.Strings.OFFENDINGMESSAGE + messageContent + "\n__Channel:__ #" + messagea.channel.name;
                     if( notes )
                         dmText += "\n__Notes:__ " + notes;
                     dmText += "\n\n" + Constants.Strings.WARNDISCLAIMER;
 
-                    messagea.author.send( dmText );
+                    messagea.author.send( dmText, {split: true} );
 
                     auditChannel.send(`**Warned Member by ${msg.member}:**`);
                     // delete message and send the report to the audit channel
@@ -1804,6 +1805,11 @@ exports.warnsCommand = function( arguments, msg, database, client, prefix ) {
 }
 
 exports.echoCommand = function( arguments, msg ) {
+    if( !msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+    
     let channel = getChannelByName( msg, arguments[0] );
     if( !channel ) {
         let channelStr = arguments[0];
@@ -1811,8 +1817,10 @@ exports.echoCommand = function( arguments, msg ) {
     }
     if( !channel )
         msg.channel.send( Constants.Strings.CHANNELNOTFOUND );
-    else
+    else {
         channel.send( arguments.slice(1).join(" ") );
+        msg.react( Constants.Strings.THUMBSUP );
+    }
 }
 
 exports.nickCommand = function( arguments, msg ) {
