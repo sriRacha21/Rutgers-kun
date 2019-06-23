@@ -1666,11 +1666,11 @@ exports.warnCommand = function( arguments, msg, client, mysql, database, prefix 
                     msg.channel.send( Constants.Strings.ALREADYWARNED );
                     return;
                 }
-                let user_id = msg.author.id;
+                let user_id = messagea.author.id;
                 // message already set as messageContent
                 let ruleNumber = ruleNumbers.join(" ");
-                let channel = msg.channel.id;
-                let server = msg.guild.id;
+                let channel = messagea.channel.id;
+                let server = messagea.guild.id;
                 let message_id = messagea.id;
                 // notes set as notes
 
@@ -1745,6 +1745,11 @@ exports.warnsCommand = function( arguments, msg, database, client, prefix ) {
         // try get by snowflake
         if( !user )
             user = msg.member.guild.member( arguments[0] );
+
+        if( !user ) {
+            msg.channel.send( Constants.Strings.USERNOTFOUNDWARN );
+            return;
+        }
         
         // get the offending messages from the database
         let messageArr = [];
@@ -1804,9 +1809,14 @@ exports.warnsCommand = function( arguments, msg, database, client, prefix ) {
     }
 }
 
-exports.echoCommand = function( arguments, msg ) {
+exports.echoCommand = function( arguments, msg, client, prefix ) {
     if( !msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
         msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    if( !arguments[0] ) {
+        Help.helpCommand( [Constants.Commands.ECHO], msg, false, client, prefix );
         return;
     }
     

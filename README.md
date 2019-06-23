@@ -22,6 +22,14 @@ Rutgers Esports Discord bot is a bot specially made for Rutgers Esports Discord.
 
 - Check understanding of rules by users through `!agree` before letting them into server.
 
+### TODO LIST FOR V2.1
+- [x] bugfixes involving warn and quote
+- [ ] dm warnings as richembeds, display warnings as richembeds
+- [ ] clear warnings
+- [ ] configurable channels for #audit, #approval, #votes, #botcommands
+- [ ] relate synonyms to command so settings in database with a command turned off also turn off synonyms
+- [ ] make separate user (or some other protection) so !execute can't be abused
+
 ### TODO LIST FOR V2
 - [x] Implement custom command interaction with database
     - [x] add
@@ -63,13 +71,6 @@ Rutgers Esports Discord bot is a bot specially made for Rutgers Esports Discord.
 - [x] implement blind voting
 - [x] dont let users delete certain bot messages
 - [x] vote for emotes
-
-### TODO LIST FOR V2.1
-- [x] bugfixes involving warn and quote
-- [ ] dm warnings as richembeds, display warnings as richembeds
-- [ ] clear warnings
-- [ ] relate synonyms to command so settings in database with a command turned off also turn off synonyms
-- [ ] make separate user (or some other protection) so !execute can't be abused
 
 ### HOW TO USE
 1. Clone project into a folder somewhere (hopefully a server that will always be running)

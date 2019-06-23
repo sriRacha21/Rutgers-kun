@@ -912,7 +912,7 @@ function processCommand( receivedMessage, htSettings ) {
 			Commands.warnsCommand( argumentCommands, receivedMessage, database, client, prefix );
 			break;
 		case Constants.Commands.ECHO:
-			Commands.echoCommand( argumentCommandsClean, receivedMessage );
+			Commands.echoCommand( argumentCommandsClean, receivedMessage, client, prefix );
 			break;
 		case Constants.Commands.NICK:
 			Commands.nickCommand( argumentCommands, receivedMessage );
