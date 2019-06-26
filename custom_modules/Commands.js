@@ -39,11 +39,6 @@ var allPermsGiven = false;
  * @param {@link Message} msg - The message object that is being processed.
  */
 exports.rolesCommand = function( arguments, msg, prefix ) {
-    if( !exports.isManagedServer( msg.guild ) ) {
-        msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
-        return;
-    }
-
     // can't use this command in bot commands
     if( !exports.isRunnable( msg ) )
         return;
@@ -80,7 +75,7 @@ exports.pingCommand = function( arguments, msg, client ) {
  * @param {string[]} arguments - An array of arguments passed to the command. These will be added onto the sent message.
  * @param {@link Message} msg - The message object that is being processed.
  */
-exports.roleCommand = function( arguments, msg, client, prefix ) {
+exports.roleCommand = function( arguments, msg, isManagedServer, client, prefix ) {
     if( !exports.isRunnable( msg ) )
         return;
 
@@ -144,7 +139,7 @@ exports.roleCommand = function( arguments, msg, client, prefix ) {
 
                     // console.log( "comparing " + role.name.toLowerCase() + " to " + argument );
                     if( role.name.toLowerCase() == argument ) {
-                        if( role.hasPermission( Constants.Permissions.PRIORITYSPEAKER, false, true ) ) {
+                        if( role.hasPermission( Constants.Permissions.PRIORITYSPEAKER, false, true ) && isManagedServer ) {
                             invalidRoleTriedToAdd = role.name;
                             // Set flag indicating to notify mods
                             notifyMods = true;
@@ -168,14 +163,15 @@ exports.roleCommand = function( arguments, msg, client, prefix ) {
                     break;
             }
 
-            let auditChannel = getChannelByName( msg, Constants.Strings.BOTOUTPUT );
-            if( auditChannel === undefined ) {
-                console.log( Constants.Strings.NOAUDITWARN + msg.guild.name );
-                return;
-            }
-
             if( notifyMods ) {
                 msg.channel.send( Constants.Strings.ATTEMPTEDROLEADD );
+                
+                let auditChannel = getChannelByName( msg, Constants.Strings.BOTOUTPUT );
+                if( auditChannel === undefined ) {
+                    console.log( Constants.Strings.NOAUDITWARN + msg.guild.name );
+                    return;
+                }
+                
                 auditChannel.send( msg.author.tag + Constants.Strings.TRIEDTOADDROLE + invalidRoleTriedToAdd );
                 return;
             }
@@ -185,36 +181,36 @@ exports.roleCommand = function( arguments, msg, client, prefix ) {
             .then( function() {
                 if( addingProtectedRole ) 
                     msg.member.removeRole( roleToRemove, Constants.Strings.ROLEREASON );
+
+                let roleNames = [];
+                rolesToAdd.forEach(( role ) => {
+                    roleNames.push( role.name )
+                });
+    
+                if( duplicateRoleFlag )
+                    msg.channel.send( Constants.Strings.DUPLICATEROLE );
+                if( tooManyPrivFlag )
+                    msg.channel.send( Constants.Strings.TOOMANYPRIV );
+    
+                // Logic to return proper message
+                if( rolesToAdd.length == 0 && exitFlag )
+                    return;
+                else if( rolesToAdd.length == 0 )
+                    msg.channel.send( Constants.Strings.NOROLEADDDONE );
+                else
+                    msg.channel.send( roleNames.join( " and " ) + Constants.Strings.ADDROLEDONE );
+    
+                if( addingProtectedRole ) {
+                    msg.channel.send( roleToRemove.name + Constants.Strings.REMOVEROLEDONE );
+                    if( roleToRemove.name == Constants.SpecialRoles[0] && roleNames[0] == Constants.SpecialRoles[1] )
+                        msg.channel.send( Constants.Strings.CONGRATULATIONSGRAD );
+                }
             })
             .catch( function(error) {
                 msg.channel.send( Constants.Strings.NOPERMROLE );
                 console.log( "error details: " );
                 console.error;
             });
-
-            let roleNames = [];
-            rolesToAdd.forEach(( role ) => {
-                roleNames.push( role.name )
-            });
-
-            if( duplicateRoleFlag )
-                msg.channel.send( Constants.Strings.DUPLICATEROLE );
-            if( tooManyPrivFlag )
-                msg.channel.send( Constants.Strings.TOOMANYPRIV );
-
-            // Logic to return proper message
-            if( rolesToAdd.length == 0 && exitFlag )
-                return;
-            else if( rolesToAdd.length == 0 )
-                msg.channel.send( Constants.Strings.NOROLEADDDONE );
-            else
-                msg.channel.send( roleNames.join( " and " ) + Constants.Strings.ADDROLEDONE );
-
-            if( addingProtectedRole ) {
-                msg.channel.send( roleToRemove.name + Constants.Strings.REMOVEROLEDONE );
-                if( roleToRemove.name == Constants.SpecialRoles[0] && roleNames[0] == Constants.SpecialRoles[1] )
-                    msg.channel.send( Constants.Strings.CONGRATULATIONSGRAD );
-            }
         }
         if( arguments[0] == Constants.Strings.REMOVEROLE ) {
             let certainRoles = roleExclude( msg.member.roles );
@@ -697,7 +693,7 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
                 break;
         }
 
-        clearTimeout( htNewMembers.get( msg.member.id ) );
+        clearTimout( htNewMembers.get( msg.member.id ) );
         htNewMembers.remove( msg.member.id );
     } else if( part == 2 ) {
         if( htMembers.get( msg.author.id ) === undefined ) {
@@ -1072,8 +1068,8 @@ exports.leaveCommand = function( arguments, msg ) {
 }
 
 exports.addEmoteCommand = function( arguments, msg, htAccept, adding, client, prefix ) {
-    if( arguments.length > 0 ) {
-        Help.helpCommand( [Constants.Commands.ADDSOUND], msg, false, client, prefix );
+    if( arguments.length > 1 ) {
+        Help.helpCommand( [Constants.Commands.ADDEMOTE], msg, false, client, prefix );
     } else {
         let ranOnce = false;
         let warnFilesizeEmote = false;
@@ -1088,7 +1084,10 @@ exports.addEmoteCommand = function( arguments, msg, htAccept, adding, client, pr
                 if( !exports.isManagedServer( msg.guild ) || msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) || adding ) {
                     let file = attachment.proxyURL;
                     let filename = attachment.filename.match(/[^.]*/g)[0];
-                    msg.guild.createEmoji(file, filename);
+                    if( arguments.length == 0 )
+                        msg.guild.createEmoji(file, filename);
+                    else
+                        msg.guild.createEmoji(file,arguments[0]);
                     msg.react( Constants.Strings.THUMBSUP );
                 } else {
                     msg.react( Constants.Strings.THINK );

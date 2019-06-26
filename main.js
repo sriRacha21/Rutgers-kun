@@ -178,6 +178,9 @@ client.on( 'message', (receivedMessage, settings) => {
 		}
 	}
 
+	// refetch filter words from commands
+	filterWords = Commands.filterWords;
+
 	// word filtering
 	if( Commands.isManagedServer( receivedMessage.guild ) ) {
 		for( let i = 0; i < filterWords.length; i++ ) {
@@ -477,8 +480,7 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 					user.send( Constants.Strings.NOPERMREACTIONWARN );
 					messageReaction.remove( user );
 				}
-			} else
-				throw "what the fuck";
+			}
 		});
 		// reject
 	} else if( messageReaction.message.channel.name == Constants.Strings.APPROVAL
@@ -510,8 +512,7 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 					user.send( Constants.Strings.NOPERMREACTIONWARN );
 					messageReaction.remove( user );
 				}
-			} else
-				throw "what the fuck";
+			}
 		});
 	}
 	let value = htAccept.get( messageReaction.message.id );
@@ -741,6 +742,7 @@ function processCommand( receivedMessage, htSettings ) {
 	let disabledCommands = htSettings.get( "server command: " );
 	if( disabledCommands.includes(Constants.Commands.EXECUTE) )
 		disabledCommands.push( Constants.CommandSynonyms.EXEC );
+	let isManagedServer = Commands.isManagedServer( receivedMessage.guild );
 	
 	// get second to last message
 	let secondToLastMessage = htSecondToLastMessages.get( receivedMessage.author.id );
@@ -803,22 +805,22 @@ function processCommand( receivedMessage, htSettings ) {
 				command = Constants.Commands.ROLE;
 				argumentCommandsClean[0] = temp;
 			}
-			Commands.roleCommand( argumentCommandsClean, receivedMessage, client, prefix );
+			Commands.roleCommand( argumentCommandsClean, receivedMessage, isManagedServer, client, prefix );
 			break;
 		case Constants.CommandSynonyms.ADDROLE:
 			argumentCommandsClean.unshift("add");
-			Commands.roleCommand( argumentCommandsClean, receivedMessage, client, prefix );
+			Commands.roleCommand( argumentCommandsClean, receivedMessage, isManagedServer, client, prefix );
 			break;
 		case Constants.CommandSynonyms.REMOVEROLE:
 			argumentCommandsClean.unshift("remove");
-			Commands.roleCommand( argumentCommandsClean, receivedMessage, client, prefix );
+			Commands.roleCommand( argumentCommandsClean, receivedMessage, isManagedServer, client, prefix );
 			break;
 		case Constants.CommandSynonyms.ROLES:
 			argumentCommandsClean.unshift("list");
-			Commands.roleCommand( argumentCommandsClean, receivedMessage, client, prefix );
+			Commands.roleCommand( argumentCommandsClean, receivedMessage, isManagedServer, client, prefix );
 			break;
         case Constants.Commands.ROLE:
-            Commands.roleCommand( argumentCommandsRemovePunctuation, receivedMessage, client, prefix );
+            Commands.roleCommand( argumentCommandsRemovePunctuation, receivedMessage, isManagedServer, client, prefix );
 			break;
 		case Constants.Commands.SCHEDULE:
 			Commands.scheduleCommand( fullCommand.split(Constants.Strings.COMMANDSPLITTER), receivedMessage, client, prefix );
@@ -939,7 +941,7 @@ function processCommand( receivedMessage, htSettings ) {
 				console.log( "built query: " + query );
 			database.query( query, function(err, results) {
 				if( err ) {
-					msg.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
+					receivedMessage.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
 					return;
 				}
 				if( results[0] ) {
@@ -964,8 +966,8 @@ function processCommand( receivedMessage, htSettings ) {
  * @returns {boolean} 
  */
 function rutgersChan( msg ) {
-	if ( msg.content.toLowerCase().includes("rutgers")
-	&& msg.content.toLowerCase().includes("chan") ) {
+	if ( msg.content.toLowerCase().includes("rutgerschan")
+		|| msg.content.toLowerCase().includes("rutgers-chan") ) {
 		let random = Math.random()
 		if( random < 0.9 ) {
 			let emote = Constants.HEARTEMOTES[Math.floor(Math.random()*Constants.HEARTEMOTES.length)];

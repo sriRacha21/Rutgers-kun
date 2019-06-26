@@ -53,6 +53,8 @@ Instructions = {
         `execute <${Constants.SupportedLanguagesArr.join("/")}> <code>`,
         null,
         ["exec"]],
+    ADDCOMMANDINSTRUCTION: ["Add a custom command.",
+        "addcommand <name> <contents>"],
     COMMANDINSTRUCTION: ["Work with custom commands.",
         "command <add/delete/list/detail> ?arguments",
         null,
@@ -96,7 +98,7 @@ Instructions = {
     LEAVEINSTRUCTION: ["Use this command to make the bot leave the voice channel it is currently in.",
         "leave"],
     ADDEMOTEINSTRUCTION: ["Add emotes to the server with this command. The filename will be used as the emote name.",
-        "addemote <attach image file>"],
+        "addemote ?emotename <attach image file>"],
     SCHEDULEINSTRUCTION: ["Schedule messages to send in channel(s). You can pass `none` to `role-to-ping` to not ping any roles.",
         "schedule message-to-send ; channel-name-1 channel-name-2 ... ; role-to-ping-1 role-to-ping-2 ... ; <number><w/d/h/m/s>",
         "Mention Everyone"],
@@ -164,6 +166,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.ADDEMOTE:
                 generateCommandField( embed, Instructions.ADDEMOTEINSTRUCTION, prefix );
+                break;
+            case Constants.CommandSynonyms.ADDCOMMAND:
+                generateCommandField( embed, Instructions.ADDCOMMANDINSTRUCTION, prefix );
                 break;
             case Constants.Commands.COMMAND:
                 generateCommandField( embed, Instructions.COMMANDINSTRUCTION, prefix );
