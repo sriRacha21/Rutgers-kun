@@ -567,8 +567,9 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 			message.attachments.forEach(( attachment ) => {
 				filename = attachment.filename;
 			});
-			let name = ":" + filename.match(/[^.]*/g)[0] + ":";
-			Commands.addEmoteCommand( [], value, htAccept, true, client );
+			let emoteName = htAccept.get( "emote name " + messageReaction.message.id );
+			let name = ":" + emoteName + ":";
+			Commands.addEmoteCommand( [emoteName], value, htAccept, true, client );
 			userS.send( Constants.Strings.EMOTEADDSUCCESS + name );
 			htAccept.remove( "emote " + messageReaction.message.id );
 		} else {
@@ -586,6 +587,8 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 				message.attachments.forEach(( attachment ) => {
 					filename = attachment.filename;
 				});
+				if( htAccept.get( "emote name " + messageReaction.message.id ) )
+					filename = htAccept.get( "emote name " + messageReaction.message.id );
 				let name = ":" + filename.match(/[^.]*/g)[0] + ":";
 				userS.send( Constants.Strings.EMOTEADDFAILURE + name );
 				htAccept.remove( "emote " + messageReaction.message.id );

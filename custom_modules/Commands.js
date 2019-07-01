@@ -693,7 +693,7 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
                 break;
         }
 
-        clearTimout( htNewMembers.get( msg.member.id ) );
+        clearTimeout( htNewMembers.get( msg.member.id ) );
         htNewMembers.remove( msg.member.id );
     } else if( part == 2 ) {
         if( htMembers.get( msg.author.id ) === undefined ) {
@@ -1092,16 +1092,18 @@ exports.addEmoteCommand = function( arguments, msg, htAccept, adding, client, pr
                 } else {
                     msg.react( Constants.Strings.THINK );
                     let botoutputChannel = getChannelByName( msg, Constants.Strings.BOTOUTPUT );
+                    let name = arguments[0] ? arguments[0] : attachment.filename.match(/[^.]*/g)[0];
                     let embed = new RichEmbed()
                         .setAuthor( Constants.Strings.EMEMOTEADD, client.user.displayAvatarURL )
                         .setTitle( msg.author.tag )
                         .setColor(0xFF0000)
-                        .addField( Constants.Strings.EMEMOTENAME, attachment.filename.match(/[^.]*/g)[0] )
+                        .addField( Constants.Strings.EMEMOTENAME, name )
                         .setThumbnail( msg.author.displayAvatarURL )
                         .setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
                     botoutputChannel.send( embed )
                     .then( message => {
                         htAccept.put( "emote " + message.id, msg );
+                        htAccept.put( "emote name " + message.id, name );
                         message.react( Constants.Strings.THUMBSUP );
                         message.react( Constants.Strings.THUMBSDOWN );
                     });
@@ -1155,7 +1157,6 @@ exports.kickCommand = function( member ) {
 }
 
 exports.commandCommand = function( arguments, msg, mysql, database, prefix, client, EmojiConvertor ) {
-    console.log( "arguments received: " + arguments.toString() );
     if( arguments.length == 0 ) {
         Help.helpCommand( [Constants.Commands.COMMAND], msg, false, client, prefix );
         return;
