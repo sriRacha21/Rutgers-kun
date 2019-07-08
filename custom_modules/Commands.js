@@ -1168,6 +1168,9 @@ exports.commandCommand = function( arguments, msg, mysql, database, prefix, clie
         case "delete":
             exports.deleteCommand( arguments.slice(1), msg, database );
             break;
+        case "edit":
+            exports.editCmdCommand( arguments.slice(1), msg, database, prefix, mysql );
+            break;
         case "list":
             exports.listCustomCommands( arguments.slice(1), msg, database, prefix );
             break;
@@ -1293,6 +1296,30 @@ exports.deleteCommand = function( arguments, msg, database ) {
 
     }
 }
+
+exports.editCmdCommand = function( arguments, msg, database, prefix, mysql ) {
+    let name = arguments[0];
+    let message = arguments.slice(1).join(" ");
+    let query = `SELECT * FROM commands WHERE name=? AND made_by=? AND server_id=?;`
+    query = mysql.format( query, [name, msg.author.id, msg.guild.id] );
+    if( DEBUG )
+        console.log( "built query: " + query );
+    database.query( query, function( err, results ) {
+        if( exports.errHandler( err, msg ) ) return;
+        if( results.length == 0 ) {
+            msg.channel.send( "No command that you made by that name could be found in this server." );
+            return;
+        }
+        query = `UPDATE commands SET message=? WHERE name=? AND made_by=? AND server_id=?`;
+        query = mysql.format( query, [message, name, msg.author.id, msg.guild.id] );
+        if( DEBUG )
+            console.log( "built query: " + query );
+        database.query( query, function( err, results ) {
+            if( exports.errHandler( err, msg ) ) return;
+            msg.react( Constants.Strings.THUMBSUP );
+        });
+    })
+};
 
 /**
  * Used to list the custom commands in a server.
@@ -2065,6 +2092,34 @@ exports.updaterulesCommand = function( arguments, msg, mysql, database ) {
             msg.react( Constants.Strings.THUMBSUP );
         });
     }
+}
+
+exports.filterFromLiveCommand = function( arguments, msg, mysql, database ) {
+    if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    let user;
+    msg.mentions.members.forEach(( member ) => {
+        user = member;
+    })
+    // try get by snowflake
+    if( !user )
+        user = msg.member.guild.member( arguments[0] );
+
+    if( !user ) {
+        msg.channel.send( Constants.Strings.USERNOTFOUNDWARN );
+        return;
+    }
+
+    let query = `INSERT INTO filteredFromLive VALUES ( ${user.user.id}, ${user.guild.id} )`;
+    if( DEBUG )
+        console.log( "Built query: " + query );
+    database.query( query, function( err, results ) {
+        if( exports.errHandler( err, msg ) ) return;
+        msg.channel.send( `Successfully ignoring user ${user.user.tag} for the live role.` );
+    });
 }
 
 /**

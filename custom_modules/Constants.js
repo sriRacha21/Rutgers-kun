@@ -34,6 +34,7 @@ exports.Commands = {
     PURGE: "purge",
     SETTINGS: "settings",
     UPDATERULES: "updaterules",
+    FILTERFROMLIVE: "filterfromlive",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
 }
@@ -86,6 +87,7 @@ exports.CommandsArray = [
     this.Commands.PURGE,
     this.Commands.SETTINGS,
     this.Commands.UPDATERULES,
+    this.Commands.FILTERFROMLIVE,
     this.Commands.WHOAMI,
 ];
 
@@ -104,6 +106,7 @@ exports.HiddenCommands = [
     this.Commands.NICK,
     this.Commands.PURGE,
     this.Commands.UPDATERULES,
+    this.Commands.FILTERFROMLIVE,
     this.Commands.SETTINGS,
 ];
 
@@ -120,6 +123,7 @@ exports.ManagedCommands = [
     this.Commands.NICK,
     this.Commands.PURGE,
     this.Commands.UPDATERULES,
+    this.Commands.FILTERFROMLIVE,
 ];
 
 exports.Permissions = {

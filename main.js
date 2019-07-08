@@ -395,10 +395,19 @@ client.on( "presenceUpdate", (oldGuildMember, newGuildMember) => {
 	if( !( newGuildMember.presence.game === undefined || newGuildMember.presence.game === null ) )
 		newIsStreaming = newGuildMember.presence.game.streaming;
 
-	if( !oldIsStreaming && newIsStreaming )
-		newGuildMember.addRole( Commands.getRoleByNameGuild( newGuildMember.guild, Constants.Strings.LIVEROLE ) );
-	if( oldIsStreaming && !newIsStreaming )
-		newGuildMember.removeRole( Commands.getRoleByNameGuild( newGuildMember.guild, Constants.Strings.LIVEROLE ) );
+	database.query( "SELECT user,server FROM filteredFromLive", function( err, results ) {
+		let isOnList = false;
+		results.forEach(( result ) => {
+			if( result.user == newGuildMember.user.id && result.server == newGuildMember.guild.id )
+				isOnList = true;
+		})
+		if( !isOnList ) {
+			if( !oldIsStreaming && newIsStreaming )
+				newGuildMember.addRole( Commands.getRoleByNameGuild( newGuildMember.guild, Constants.Strings.LIVEROLE ) );
+			if( oldIsStreaming && !newIsStreaming )
+				newGuildMember.removeRole( Commands.getRoleByNameGuild( newGuildMember.guild, Constants.Strings.LIVEROLE ) );
+		}
+	});
 });
 
 client.on( "typingStart", (channel, user) => {
@@ -930,6 +939,9 @@ function processCommand( receivedMessage, htSettings ) {
 			break;
 		case Constants.Commands.UPDATERULES:
 			Commands.updaterulesCommand( argumentCommands, receivedMessage, mysql, database );
+			break;
+		case Constants.Commands.FILTERFROMLIVE:
+			Commands.filterFromLiveCommand( argumentCommands, receivedMessage, mysql, database );
 			break;
 		case Constants.Commands.WHOAMI:
 			Commands.whoamiCommand( argumentCommands, receivedMessage, client );
