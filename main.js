@@ -215,8 +215,10 @@ client.on( 'message', (receivedMessage, settings) => {
 			let word = results[i].word;
 			let count = results[i].count;
 			if( receivedMessage.author.id == user && receivedMessage.content.toLowerCase().includes(word) ) {
-				receivedMessage.channel.send( `${receivedMessage.author.username} ${word} counter: ${count+1}`);
-				query = mysql.format(`UPDATE wordCounters SET count=count+1 WHERE user=? AND word=?`, [receivedMessage.author.id,word]);
+				let content = receivedMessage.content.toLowerCase();
+				let wordCount = (content.match(new RegExp(word,"g")) || []).length
+				receivedMessage.channel.send( `${receivedMessage.author.username} ${word} counter: ${count+wordCount}`);
+				query = mysql.format(`UPDATE wordCounters SET count=count+? WHERE user=? AND word=?`, [wordCount,receivedMessage.author.id,word]);
 				if( DEBUG )
 					console.log( "built query: " + query );
 				database.query( query, function( err, results ) {

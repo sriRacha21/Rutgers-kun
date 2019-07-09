@@ -2123,17 +2123,20 @@ exports.filterFromLiveCommand = function( arguments, msg, mysql, database ) {
 }
 
 exports.setWordCommand = function( arguments, msg, client, database, mysql, prefix ) {
-    if( arguments.length < 1 || arguments.length > 2 )
+    if( arguments.length < 1 || arguments.length > 3 )
         Help.helpCommand( [Constants.Commands.SETWORD], msg, false, client, prefix );
     else {
+        let isDelete = arguments[0].toLowerCase() == 'delete';
+        if( isDelete )
+            arguments = arguments.slice(1);
         let user;
         let word;
         if( arguments.length == 1 ) {
             user = msg.author;
-            word = arguments[0].toLowerCase();
+            word = arguments.slice(0).join(" ").toLowerCase();
         } else {
             user = msg.mentions.users.array()[0];
-            word = arguments[1].toLowerCase();
+            word = arguments.slice(1).join(" ").toLowerCase();
         }
 
         if( !user ) {
@@ -2145,13 +2148,24 @@ exports.setWordCommand = function( arguments, msg, client, database, mysql, pref
             return;
         }
 
+        if( isDelete ) {
+            let query = mysql.format('DELETE FROM wordCounters WHERE word=? AND user=?', [word,user.id] );
+            if( DEBUG )
+                console.log( "built query: " + query );
+            database.query( query, function( err, results ) {
+                if( exports.errHandler( err, msg ) ) return;
+                msg.channel.send( `Successfully deleted word \`${word}\` for user \`${user.tag}\`` );
+            });
+            return;
+        }
+
         let query = mysql.format('INSERT INTO wordCounters VALUES ( ?,?,? )',[user.id,0,word] );
         if( DEBUG )
             console.log( "built query: " + query );
         database.query( query, function( err, results ) {
             if( exports.errHandler( err, msg ) ) return;
             msg.channel.send( `Successfully set word \`${word}\` for user \`${user.tag}\`` );
-        })
+        });
     }
 }
 
