@@ -35,6 +35,7 @@ exports.Commands = {
     SETTINGS: "settings",
     UPDATERULES: "updaterules",
     FILTERFROMLIVE: "filterfromlive",
+    SETWORD: "setword",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
 }
@@ -88,6 +89,7 @@ exports.CommandsArray = [
     this.Commands.SETTINGS,
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
+    this.Commands.SETWORD,
     this.Commands.WHOAMI,
 ];
 

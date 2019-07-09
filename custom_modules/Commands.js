@@ -2122,6 +2122,39 @@ exports.filterFromLiveCommand = function( arguments, msg, mysql, database ) {
     });
 }
 
+exports.setWordCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    if( arguments.length < 1 || arguments.length > 2 )
+        Help.helpCommand( [Constants.Commands.SETWORD], msg, false, client, prefix );
+    else {
+        let user;
+        let word;
+        if( arguments.length == 1 ) {
+            user = msg.author;
+            word = arguments[0].toLowerCase();
+        } else {
+            user = msg.mentions.users.array()[0];
+            word = arguments[1].toLowerCase();
+        }
+
+        if( !user ) {
+            msg.channel.send( Constants.Strings.USERNOTFOUNDWARN );
+            return;
+        }
+        if( !word ) {
+            msg.channel.send( "Word not set." );
+            return;
+        }
+
+        let query = mysql.format('INSERT INTO wordCounters VALUES ( ?,?,? )',[user.id,0,word] );
+        if( DEBUG )
+            console.log( "built query: " + query );
+        database.query( query, function( err, results ) {
+            if( exports.errHandler( err, msg ) ) return;
+            msg.channel.send( `Successfully set word \`${word}\` for user \`${user.tag}\`` );
+        })
+    }
+}
+
 /**
  * Tells the server who the bot is.
  * @param {string[]} arguments - The arguments supplied to this command. Will be ignored.

@@ -204,6 +204,28 @@ client.on( 'message', (receivedMessage, settings) => {
 	// if rutgers-kun sees his love, heart emote react
 	rutgersChan( receivedMessage );
 
+	// word counter
+	let query = mysql.format('SELECT user,word,count FROM wordCounters WHERE user=?', receivedMessage.author.id);
+	if( DEBUG )
+		console.log( "built query: " + query );
+	database.query( query, function( err, results ) {
+		if( Commands.errHandler( err, receivedMessage ) ) return;
+		for( let i = 0; i < results.length; i++ ) {
+			let user = results[i].user;
+			let word = results[i].word;
+			let count = results[i].count;
+			if( receivedMessage.author.id == user && receivedMessage.content.toLowerCase().includes(word) ) {
+				receivedMessage.channel.send( `${receivedMessage.author.username} ${word} counter: ${count+1}`);
+				query = mysql.format(`UPDATE wordCounters SET count=count+1 WHERE user=? AND word=?`, [receivedMessage.author.id,word]);
+				if( DEBUG )
+					console.log( "built query: " + query );
+				database.query( query, function( err, results ) {
+					if( Commands.errHandler( err, receivedMessage ) ) return;
+				});
+			}
+		}
+	});
+
 	// Command will be processed if it starts with the designated prefix
     if( receivedMessage.content.startsWith( prefix ) || receivedMessage.content.startsWith( `<@${client.user.id}>` ) )
 		processCommand( receivedMessage, settings );
@@ -468,10 +490,11 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 		if( DEBUG )
 			console.log( "built query: " + query );
 		database.query( query, function( err, results ) {
-			if( err ) {
-				messageReaction.message.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
-				return;
-			}
+			// if( err ) {
+			// 	messageReaction.message.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
+			// 	return;
+			// }
+			if( Commands.errHandler( err, messageReaction.message ) ) return;
 			if( results.length > 0 ) {
 				if( member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
 					if( messageReaction.count > 2 ) {
@@ -500,10 +523,7 @@ client.on( "messageReactionAdd", (messageReaction, user, settings) => {
 		if( DEBUG )
 			console.log( "built query: " + query );
 		database.query( query, function( err, results ) {
-			if( err ) {
-				messageReaction.message.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
-				return;
-			}
+			if( Commands.errHandler( err, messageReaction.message ) ) return;
 			if( results.length > 0 ) {
 				if( member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
 					if( messageReaction.count > 2 ) {
@@ -943,6 +963,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.FILTERFROMLIVE:
 			Commands.filterFromLiveCommand( argumentCommands, receivedMessage, mysql, database );
 			break;
+		case Constants.Commands.SETWORD:
+			Commands.setWordCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
+			break;
 		case Constants.Commands.WHOAMI:
 			Commands.whoamiCommand( argumentCommands, receivedMessage, client );
 			break;
@@ -955,10 +978,7 @@ function processCommand( receivedMessage, htSettings ) {
 			if( DEBUG )
 				console.log( "built query: " + query );
 			database.query( query, function(err, results) {
-				if( err ) {
-					receivedMessage.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
-					return;
-				}
+				if( Commands.errHandler( err, receivedMessage ) ) return;
 				if( results[0] ) {
 						let message = results[0].message;
 					receivedMessage.channel.send( `${message} ${argumentCommandsClean.join(" ")}` )

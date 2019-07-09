@@ -108,6 +108,9 @@ Instructions = {
     FILTERFROMLIVEINSTRUCTION: ["Filter a user from getting the live role.",
         "filterfromlive @member",
         "Admin"],
+    SETWORDINSTRUCTION: ["Add a word to be tracked for a certain user.",
+        "setword ?@member <word>",
+        "none"],
     SETTINGSINSTRUCTION: ["Change user settings for the bot or server settings if you have the right permissions. See personal and server settings.",
         "settings <name> <options>",
         null,
@@ -205,6 +208,12 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.UPDATERULES:
                 generateCommandField( embed, Instructions.UPDATERULESINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.FILTERFROMLIVE:
+                generateCommandField( embed, Instructions.FILTERFROMLIVEINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.SETWORD:
+                generateCommandField( embed, Instructions.SETWORDINSTRUCTION, prefix );
                 break;
             case Constants.Commands.SETTINGS:
                 generateCommandField( embed, Instructions.SETTINGSINSTRUCTION, prefix );
