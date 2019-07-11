@@ -214,6 +214,7 @@ client.on( 'message', (receivedMessage, settings) => {
 			let user = results[i].user;
 			let word = results[i].word;
 			let count = results[i].count;
+			// console.log( "comparing " + receivedMessage.content.toLowerCase() + " to " + word );
 			if( receivedMessage.author.id == user && receivedMessage.content.toLowerCase().includes(word) ) {
 				let content = receivedMessage.content.toLowerCase();
 				let wordCount = (content.match(new RegExp(word,"g")) || []).length
@@ -770,7 +771,6 @@ rl.on('line', (input) => {
  * Processes commands. This function is called when a message starting with the prefix is seen.
  * @param {string} receivedMessage - A message sent to any channel in any server that starts with the prefix, Constants.Strings.PREFIX
  */
-
 function processCommand( receivedMessage, htSettings ) {
 	let prefix = htSettings.get( "user " + Constants.Settings.PREFIX );
 	let disabledCommands = htSettings.get( "server command: " );
@@ -823,10 +823,7 @@ function processCommand( receivedMessage, htSettings ) {
 
     switch( command ) {
 		case Constants.Commands.HELP:
-			if( mentioned )
-				receivedMessage.channel.send( `Your prefix is \`${prefix}\`` );
-			else
-            	Help.helpCommand( argumentCommands, receivedMessage, false, client, prefix );
+			Help.helpCommand( argumentCommands, receivedMessage, false, client, prefix );
             break;
         case Constants.Commands.PING:
             Commands.pingCommand( argumentCommands, receivedMessage, client );
@@ -972,6 +969,10 @@ function processCommand( receivedMessage, htSettings ) {
 			Commands.whoamiCommand( argumentCommands, receivedMessage, client );
 			break;
 		case Constants.Commands.LASTCOMMAND:
+			if( mentioned ) {
+				receivedMessage.channel.send( `Your prefix is ${prefix}` );
+				break;
+			}
 			if( secondToLastMessage )
                 processCommand( secondToLastMessage, htSettings );
 			break;

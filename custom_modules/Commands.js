@@ -33,16 +33,8 @@ exports.filterWords = [];
 // This global variables stops !giveallperms from being run more than once in one instance.
 var allPermsGiven = false;
 
-/**
- * This function is a command that is called upon processing the "roles" command. It sends a message back to the same channel with a list of roles in the server.
- * @param {string[]} arguments - An array of arguments passed to the command. These will simply be ignored for now.
- * @param {@link Message} msg - The message object that is being processed.
- */
 exports.rolesCommand = function( arguments, msg, prefix ) {
     // can't use this command in bot commands
-    if( !exports.isRunnable( msg ) )
-        return;
-
     let roles = [];
     msg.guild.roles.forEach(( role ) => {
         if( arguments[0] && role.name.toLowerCase().includes(arguments[0]) )
@@ -53,20 +45,16 @@ exports.rolesCommand = function( arguments, msg, prefix ) {
     msg.channel.send( collToEmbedRoles ( roles, true, Constants.Permissions.PRIORITYSPEAKER ) );
 }
 
-/**
- * This function is a command that is called upon processing the "ping" command. It replies to the user that sent the ping with a "pong".
- * @param {string[]} arguments - An array of arguments passed to the command. These will simply be ignored for now.
- * @param {@link Message} msg - The message object that is being processed.
- */
 exports.pingCommand = function( arguments, msg, client ) {
-    if( !exports.isRunnable( msg ) )
-        return;
-
     if( arguments.length > 0 ) {
         msg.channel.send( Constants.Strings.WRONGARGS );
     } else {
-        if( client.pings[0] )
-        msg.reply( Constants.Strings.PONG + client.pings[0] + "ms" );
+        msg.channel.send( "Pinging..." )
+        .then( m => {
+            let response =  `Pong! Response time: ${m.createdTimestamp - msg.createdTimestamp}ms`;
+            response += client.pings[0] ? `\nMost recent API heartbeat: ${client.pings[0]}ms` : ``;
+            m.edit( response );
+        });
     }
 }
 
@@ -76,9 +64,6 @@ exports.pingCommand = function( arguments, msg, client ) {
  * @param {@link Message} msg - The message object that is being processed.
  */
 exports.roleCommand = function( arguments, msg, isManagedServer, client, prefix ) {
-    if( !exports.isRunnable( msg ) )
-        return;
-
     console.log( "arguments: " + arguments );
 
     if( arguments[0] != "list" && arguments.length <= 1 )
@@ -815,9 +800,6 @@ exports.loveCommand = function( arguments, msg, client, prefix ) {
  * @param {@link Message} msg - The message to process.
  */
 exports.rollCommand = function( arguments, msg, client, prefix ) {
-    if( !exports.isRunnable( msg ) )
-        return;
-
     if( arguments.length > 3 ) {
         Help.helpCommand( [Constants.Commands.ROLL], msg, false, client, prefix );
     } else {
@@ -1188,9 +1170,6 @@ exports.commandCommand = function( arguments, msg, mysql, database, prefix, clie
  * @param {Message} msg - The message to be procesed.
  */
 exports.addCmdCommand = async function( arguments, msg, mysql, database, client, EmojiConvertor ) {
-    if( !exports.isRunnable( msg ) )
-        return;
-
     if( arguments.length <= 1 )
         msg.channel.send( Constants.Strings.ADDCOMMANDINSTRUCTION );
     else {
@@ -1257,9 +1236,6 @@ exports.addCmdCommand = async function( arguments, msg, mysql, database, client,
  * @param {Message} msg - The message to be procesed.
  */
 exports.deleteCommand = function( arguments, msg, database ) {
-    if( !exports.isRunnable( msg ) )
-        return;
-    
     if( arguments.length == 0 || arguments.length > 1 )
         msg.channel.send( Constants.Strings.DELETECOMMANDINSTRUCTION );
     else {
@@ -1328,8 +1304,6 @@ exports.editCmdCommand = function( arguments, msg, database, prefix, mysql ) {
  * @param {HashTable} htGuildCommandsList - A hash table containg arrays of commands. Key is guild.id.
  */
 exports.listCustomCommands = function( arguments, msg, database, prefix ) {
-    if( !exports.isRunnable( msg ) )
-        return;
     let query = `SELECT name FROM commands WHERE server_id=${msg.guild.id} AND request_id=0`;
     if( arguments[0] )
         query += ` AND name LIKE '%${arguments[0]}%'`;
@@ -2123,12 +2097,11 @@ exports.filterFromLiveCommand = function( arguments, msg, mysql, database ) {
 }
 
 exports.setWordCommand = function( arguments, msg, client, database, mysql, prefix ) {
-    if( arguments.length < 1 || arguments.length > 3 )
+    if( arguments.length < 1 )
         Help.helpCommand( [Constants.Commands.SETWORD], msg, false, client, prefix );
     else {
         let isDelete = arguments[0].toLowerCase() == 'delete';
-        if( isDelete )
-            arguments = arguments.slice(1);
+        arguments = isDelete ? arguments.slice(1) : arguments.slice(0);
         let user;
         let word;
         if( arguments.length == 1 ) {
@@ -2147,6 +2120,10 @@ exports.setWordCommand = function( arguments, msg, client, database, mysql, pref
             msg.channel.send( "Word not set." );
             return;
         }
+        if( word.length <= 2 ) {
+            msg.channel.send( "Word is too short." );
+            return;
+        }
 
         if( isDelete ) {
             let query = mysql.format('DELETE FROM wordCounters WHERE word=? AND user=?', [word,user.id] );
@@ -2159,12 +2136,21 @@ exports.setWordCommand = function( arguments, msg, client, database, mysql, pref
             return;
         }
 
-        let query = mysql.format('INSERT INTO wordCounters VALUES ( ?,?,? )',[user.id,0,word] );
+        let query = mysql.format('SELECT * FROM wordCounters WHERE word=? AND user=?', [word,user.id] );
         if( DEBUG )
             console.log( "built query: " + query );
         database.query( query, function( err, results ) {
-            if( exports.errHandler( err, msg ) ) return;
-            msg.channel.send( `Successfully set word \`${word}\` for user \`${user.tag}\`` );
+            if( results && results.length > 0 ) {
+                msg.channel.send( "That word is already being tracked for this user." );
+                return;
+            }
+            query = mysql.format('INSERT INTO wordCounters VALUES ( ?,?,? )',[user.id,0,word] );
+            if( DEBUG )
+                console.log( "built query: " + query );
+            database.query( query, function( err, results ) {
+                if( exports.errHandler( err, msg ) ) return;
+                msg.channel.send( `Successfully set word \`${word}\` for user \`${user.tag}\`` );
+            });
         });
     }
 }
@@ -2443,22 +2429,6 @@ function isPrivileged( role ) {
 }
 
 /**
- * Checks if a command is allowed to be run. Only checks if command is being run in #botcommands.
- * @param {@link Message} msg - The received message in a command to use to perform the check.
- * @returns {boolean} Whether or not the command can be run.
- */
-exports.isRunnable = function( msg ) {
-    if( msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) )
-        return true;
-
-    if( msg.channel.name == Constants.Strings.BOTCOMMANDS )
-        return true;
-    let botCommandsChannel = getChannelByName( msg, Constants.Strings.BOTCOMMANDS );
-    msg.channel.send( Constants.Strings.BOTCOMMANDSWARNING + botCommandsChannel );
-    return false;
-}
-
-/**
  * Sends an email using the mailgun service.
  * @param {Mailgun} mailgun - An instance of a mailgun.
  * @param {string} from - The sender of the email. Read mailgun docs for more info on properly formatting this field.
@@ -2473,17 +2443,6 @@ function sendEmail( msg, mailgun, from, to, subject, text ) {
         subject: subject,
         text: text
     };
-    // mailgun.messages().send( data, function( error, body ) {
-    //     if( error ) {
-    //         console.log( "error: " + error );
-    //         return;
-    //     }
-        // console.log( "Attempting to send email with following fields:\n" +
-        //     "from: " + from + "\n" +
-        //     "to: " + to + "\n" +
-        //     "subject: " + subject + "\n" +
-        //     "text: " + text + "\n" );
-    // });
     mailgun.sendText( from, to, subject, text, function(err) {
         if( err ) {
             msg.author.send( "Failed to send email." );

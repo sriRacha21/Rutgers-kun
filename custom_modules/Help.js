@@ -123,10 +123,6 @@ Instructions = {
 }
 
 exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
-    // can't use this command in bot commands
-    if( !admin && !Commands.isRunnable( msg ) )
-        return;
-
     if ( arguments.length == 1 ) {
         let command = arguments[0];
         let embed = new RichEmbed()
