@@ -505,6 +505,17 @@ exports.muteCommand = function( arguments, msg, isUnmute, isTimer, client, prefi
             htTimers.remove( userToMute + "mute" );
         }
 
+        let milliseconds = calcMilliseconds( weeks, days, hours, minutes, seconds );
+        if( !isUnmute ) {
+            if( milliseconds <= 5000 ) {
+                msg.channel.send( "Mute time must be longer than 5 seconds." );
+                return;
+            } else if( milliseconds >= Number.MAX_SAFE_INTEGER ) {
+                msg.channel.send( "Mute time is too long." );
+                return;
+            }
+        }
+
         // adjust roles appropriately to reflect muted status
         if( !isUnmute ) {
             userToMute.addRole( mutedRole );
@@ -518,7 +529,6 @@ exports.muteCommand = function( arguments, msg, isUnmute, isTimer, client, prefi
         }
 
         // theoretical limit of ~104249991.374 days given how large a number can be in js (approx 2^53)
-        let milliseconds = calcMilliseconds( weeks, days, hours, minutes, seconds );
         if( !isUnmute ) {
             let timer = setTimeout( exports.muteCommand, milliseconds, arguments, msg, true, true, client, prefix );
             htTimers.put( userToMute + "mute", timer );
@@ -882,6 +892,23 @@ exports.woofCommand = function( arguments, msg, breeds ) {
             else
                 msg.channel.send( 'Invalid breed.' );
         });
+    })
+}
+
+exports.meowCommand = function( arguments, msg ) {
+    let url = `https://aws.random.cat/meow`;
+    https.get( url, function(res) {
+        res.on('data', function(data) {
+            let meowData = JSON.parse( data );
+            if( meowData.file )
+                msg.channel.send({
+                    files: [
+                        meowData.file
+                    ]
+                })
+            else
+                msg.channel.send( "API Error." );
+        })
     })
 }
 

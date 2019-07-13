@@ -49,6 +49,8 @@ Instructions = {
         null,
         null,
         "API for this command by " + Constants.Strings.JOEYTAG + ":\nGithub: https://github.com/joey-colon \n Woof: https://woofbot.io/ "],
+    MEOWINSTRUCTION: ["Cute cat.",
+        "meow"],
     EXECUTEINSTRUCTION: ["Run Java or Python code snippets.\nFormat: `[prefix]execute java/py code`",
         `execute <${Constants.SupportedLanguagesArr.join("/")}> <code>`,
         null,
@@ -155,6 +157,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.WOOF:
                 generateCommandField( embed, Instructions.WOOFINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.MEOW:
+                generateCommandField( embed, Instructions.MEOWINSTRUCTION, prefix );
                 break;
             case Constants.CommandSynonyms.EXEC:
             case Constants.Commands.EXECUTE:

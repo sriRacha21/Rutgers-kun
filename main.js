@@ -880,6 +880,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.WOOF:
 			Commands.woofCommand( argumentCommands, receivedMessage, breeds );
 			break;
+		case Constants.Commands.MEOW:
+			Commands.meowCommand( argumentCommands, receivedMessage );
+			break;
 		case Constants.CommandSynonyms.EXEC:
 		case Constants.Commands.EXECUTE:
 			Commands.executeCommand( argumentCommands, receivedMessage, execSync, client, prefix );
