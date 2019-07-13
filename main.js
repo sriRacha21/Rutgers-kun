@@ -102,6 +102,20 @@ client.on( 'message', (receivedMessage, settings) => {
 
 	// this block is for the email verification stuff.
 	if( receivedMessage.channel.type == 'dm' ) {
+		let DMEmbed = new RichEmbed()
+			.setAuthor( "DM Received from:", client.user.displayAvatarURL )
+			.setTitle( receivedMessage.author.tag )
+			.setColor(0xFF0000)
+			.setThumbnail( receivedMessage.author.displayAvatarURL )
+			.setFooter( Constants.Strings.TIMESTAMP + receivedMessage.createdAt );
+		if( receivedMessage.content )
+			DMEmbed.addField( "Contents:", receivedMessage.content )
+		let i = 1;
+		receivedMessage.attachments.forEach(( attachment ) => {
+			DMEmbed.addField(  "**Attachment " + i + ":**\nFilename: " + attachment.filename, attachment.proxyURL )
+			i++;
+		});
+		Commands.sendMessage( client, DMEmbed, "Rutgers Esports", "botlog" );
 		if( receivedMessage.content.endsWith( Constants.Strings.SCHOOL.toLowerCase() + ".edu" )  )
 			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 2 );
 		else if( receivedMessage.content.endsWith( ".com" ) )

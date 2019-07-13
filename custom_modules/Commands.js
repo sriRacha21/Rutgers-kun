@@ -1107,7 +1107,7 @@ exports.addEmoteCommand = function( arguments, msg, htAccept, adding, client, pr
                         .setTitle( msg.author.tag )
                         .setColor(0xFF0000)
                         .addField( Constants.Strings.EMEMOTENAME, name )
-                        .setThumbnail( msg.author.displayAvatarURL )
+                        .setThumbnail( attachment.proxyURL )
                         .setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
                     botoutputChannel.send( embed )
                     .then( message => {
@@ -1838,7 +1838,7 @@ exports.warnsCommand = function( arguments, msg, database, client, prefix ) {
 }
 
 exports.echoCommand = function( arguments, msg, client, prefix ) {
-    if( !msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) ) {
+    if( !msg.member.hasPermission( Constants.Permissions.KICKMEMBERS ) && exports.isManagedServer( msg.guild ) ) {
         msg.react( Constants.Strings.EYEROLL );
         return;
     }
@@ -2141,6 +2141,10 @@ exports.setWordCommand = function( arguments, msg, client, database, mysql, pref
 
         if( !user ) {
             msg.channel.send( Constants.Strings.USERNOTFOUNDWARN );
+            return;
+        }
+        if( user.id == client.user.id ) {
+            msg.channel.send( "I cannot track my own words." );
             return;
         }
         if( !word ) {
