@@ -70,9 +70,8 @@ https.get( "https://api.woofbot.io/v1/breeds", function(res) {
 	});
 })
 // twitch stuff
-const request = require("request");
 const TwitchClient = require('twitch').default;
-var twitchClient;
+const twitchClient = TwitchClient.withClientCredentials(API_Keys.twitch_client_id, API_Keys.twitch_client_secret);
 // tiffany typing message
 var isTiffanyTimerSet = false;
 
@@ -80,18 +79,6 @@ client.on('ready', async () => {
 	console.log( "Connected as " + client.user.tag );
 	generatePresence(0);
 	if( database ) console.log( `Database connection established` );
-	let access_token;
-	let uriToPost = `https://id.twitch.tv/oauth2/token?client_id=${API_Keys.twitch_client_id}&client_secret=${API_Keys.twitch_client_secret}&grant_type=client_credentials&scope=user_read+channel_read`;
-	request({
-		uri: uriToPost,
-		method: "POST",
-	}, async function(err,res,body) {
-		access_token = JSON.parse( body ).access_token;
-		if( access_token ) {
-			twitchClient = await TwitchClient.withCredentials( API_Keys.twitch_client_id, access_token );
-			console.log( "Got access token from Twitch." );
-		}
-	});
 })
 
 //EVENTS
