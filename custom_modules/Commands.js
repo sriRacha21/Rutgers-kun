@@ -410,13 +410,17 @@ exports.scheduleCommand = function( arguments, msg, client, prefix ) {
         for( let i = 0; i < rolesToPing.length; i++ )
             outStr += rolesToPing[i] + " ";
         outStr += message;
+        let files = [];
+        msg.attachments.forEach(( attachment ) => {
+            files.push( attachment.proxyURL );
+        })
         let milliseconds = calcMilliseconds( weeks, days, hours, minutes, seconds );
         setTimeout( function () {
             for( let i = 0; i < channels.length; i++ )
-                channels[i].send( outStr );
+                channels[i].send( outStr, { files: files } );
         }, milliseconds );
         let durString = buildDurationString( weeks, days, hours, minutes, seconds );
-        msg.channel.send( Constants.Strings.SCHEDULEDANNOUNCEMENT + durString.substring( 0, durString.length - 1) + Constants.Strings.SCHEDULEDANNOUNCEMENT2 )
+        msg.channel.send( Constants.Strings.SCHEDULEDANNOUNCEMENT + durString.substring( 0, durString.length - 1) + Constants.Strings.SCHEDULEDANNOUNCEMENT2 );
     } else {
         Help.helpCommand( [Constants.Commands.SCHEDULE], msg, false, client, prefix );
     }
