@@ -37,6 +37,7 @@ exports.Commands = {
     UPDATERULES: "updaterules",
     FILTERFROMLIVE: "filterfromlive",
     SETWORD: "setword",
+    SETROLERESPONSE: "setroleresponse",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
 }
@@ -92,6 +93,7 @@ exports.CommandsArray = [
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETWORD,
+    this.Commands.SETROLERESPONSE,
     this.Commands.WHOAMI,
 ];
 
@@ -111,7 +113,7 @@ exports.HiddenCommands = [
     this.Commands.PURGE,
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
-    this.Commands.SETTINGS,
+    this.Commands.SETROLERESPONSE,
 ];
 
 exports.ManagedCommands = [
@@ -128,6 +130,7 @@ exports.ManagedCommands = [
     this.Commands.PURGE,
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
+    this.Commands.SETROLERESPONSE,
 ];
 
 exports.Permissions = {

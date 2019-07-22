@@ -1551,7 +1551,7 @@ exports.filterCommand = function( arguments, msg, client, prefix ) {
         return;
     }
 
-    if( arguments[0].length > 0 && (arguments[0] != "add" && arguments[0] != "remove" && arguments[0] != "list") )
+    if( arguments[0] && arguments[0].length > 0 && (arguments[0] != "add" && arguments[0] != "remove" && arguments[0] != "list") )
         arguments.unshift("add");
 
     if( arguments[0] == "add" ) {
@@ -2190,6 +2190,45 @@ exports.setWordCommand = function( arguments, msg, client, database, mysql, pref
     }
 }
 
+exports.setRoleResponseCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    if( !exports.isManagedServer( msg.guild ) ) {
+        msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
+        return;
+    }
+    if( !msg.member.hasPermission( Constants.Permissions.KICKMEMBERS, false, true ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+    
+    // split by comma instead of space
+    arguments = arguments.join(" ").split(",");
+
+    if( arguments.length != 2 ) {
+        //help 
+    } else {
+        // find role
+        let role = msg.guild.roles.find( role => role.name.toLowerCase() == arguments[0].toLowerCase() )
+        if( !role )
+            role = msg.mentions.roles.first();
+        if( !role ) {
+            msg.channel.send( "Role not found!" );
+            return;
+        }
+
+        let message = arguments[1];
+
+        let query = "INSERT INTO roleResponses VALUES ( ?,? ) ON DUPLICATE KEY UPDATE role_id=?, message=?";
+        query = mysql.format( query, [role.id,message,role.id,message]);
+        if( DEBUG )
+            console.log( "built query: " + query );
+        database.query( query, function( err, results ) {
+            if( exports.errHandler( err, msg ) ) return;
+            msg.channel.send( `Successfully set message \`${message}\` for role ${role.name}.` );
+        });
+        return;
+    }
+}
+
 /**
  * Tells the server who the bot is.
  * @param {string[]} arguments - The arguments supplied to this command. Will be ignored.
@@ -2394,6 +2433,10 @@ exports.getSettings = function( msg, nm, messageReaction, user, eventType, datab
 }
 
 exports.errHandler = function( err, msg ) {
+    if( err && !msg ) {
+        console.log( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
+        return true;
+    }
     if( err ) {
         msg.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
         return true;

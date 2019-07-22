@@ -746,7 +746,29 @@ client.on( "messageReactionRemove", (messageReaction, user) => {
 	} else if( messageReaction.message.channel.name == Constants.Strings.VOTES
 		&& !htVotes.get( messageReaction.message.id ) )
 			user.send( Constants.Strings.VOTEINVALID );
-})
+});
+
+client.on( "guildMemberUpdate", (oldGuildMember, newGuildMember) => {
+	if( newGuildMember.user.bot )
+		return;
+	
+	// detect role update
+	if( !oldGuildMember.roles.equals( newGuildMember.roles ) ) {
+		let role = newGuildMember.roles.filter( newRole => !oldGuildMember.roles.array().includes(newRole) );
+		if( role.array().length > 0 ) {
+			role = role.first();
+			let query = "SELECT message FROM roleResponses WHERE role_id=?";
+			query = mysql.format( query, [role.id] );
+			if( DEBUG )
+				console.log( "built query: " + query );
+			database.query( query, function( err, results ) {
+				if( Commands.errHandler( err ) ) return;
+				if( results.length > 0 )
+					newGuildMember.user.send( results[0].message );
+			})
+		}
+	}
+});
 
 client.on( "error", (error) => {
 	console.log( "Error encountered: " + error );
@@ -969,6 +991,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.SETWORD:
 			Commands.setWordCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
+		case Constants.Commands.SETROLERESPONSE:
+			Commands.setRoleResponseCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
+			break;
 		case Constants.Commands.WHOAMI:
 			Commands.whoamiCommand( argumentCommands, receivedMessage, client );
 			break;
@@ -977,8 +1002,8 @@ function processCommand( receivedMessage, htSettings ) {
 				receivedMessage.channel.send( `Your prefix is ${prefix}` );
 				break;
 			}
-			if( secondToLastMessage )
-                processCommand( secondToLastMessage, htSettings );
+			// if( secondToLastMessage )
+            //     processCommand( secondToLastMessage, htSettings );
 			break;
 		default:
 			let query = `SELECT message FROM commands WHERE name=\'${command}\' AND request_id=0  AND server_id=${receivedMessage.guild.id}`;
