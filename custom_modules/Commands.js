@@ -2195,16 +2195,17 @@ exports.setRoleResponseCommand = function( arguments, msg, client, database, mys
         msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
         return;
     }
-    if( !msg.member.hasPermission( Constants.Permissions.KICKMEMBERS, false, true ) ) {
+    if( !msg.member.hasPermission( Constants.Permissions.MANAGECHANNELS, false, true ) ) {
         msg.react( Constants.Strings.EYEROLL );
         return;
     }
     
     // split by comma instead of space
-    arguments = arguments.join(" ").split(",");
+    arguments = arguments.join(" ").split(" ; ");
 
     if( arguments.length != 2 ) {
         //help 
+        Help.helpCommand( [Constants.Commands.SETROLERESPONSE], msg, false, client, prefix );
     } else {
         // find role
         let role = msg.guild.roles.find( role => role.name.toLowerCase() == arguments[0].toLowerCase() )
@@ -2226,6 +2227,27 @@ exports.setRoleResponseCommand = function( arguments, msg, client, database, mys
             msg.channel.send( `Successfully set message \`${message}\` for role ${role.name}.` );
         });
         return;
+    }
+}
+
+exports.djsCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    arguments = arguments.join(" ").split(".");
+    if( arguments[0] != "msg" )
+        msg.channel.send( "The API query must start with \`msg.\` ");
+    else {
+        arguments = arguments.slice(1);
+        let output;
+        // start access chain
+        arguments.forEach(( argument ) => {
+            output = output === undefined ? msg[argument] : output[argument];
+            if( output === undefined ) return;
+        });
+        msg.channel.send( "API Output: \n```js\n" + util.inspect(output) + "\n```", {split: {char: "\n", prepend: `\`\`\`js`, append: "```"}} );
     }
 }
 
@@ -2252,7 +2274,9 @@ exports.whoamiCommand = function( arguments, msg, client ) {
     creditsField += " hosted at https://woofbot.io/";
     
     embed.addField( "Thanks!", creditsField )
-        .addField( Constants.Strings.SERVERSTATS, Constants.Strings.MEMBERCOUNT + red.memberCount.toString() )
+        .addField( Constants.Strings.SERVERSTATS, 
+            Constants.Strings.MEMBERCOUNT + red.memberCount.toString()
+            + "\nServers: " + client.guilds.array().length )
         .setThumbnail( client.user.displayAvatarURL )
         .setFooter( client.user.tag, client.user.displayAvatarURL );
     

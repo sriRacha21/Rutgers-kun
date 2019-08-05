@@ -994,6 +994,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.SETROLERESPONSE:
 			Commands.setRoleResponseCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
+		case Constants.Commands.DJS:
+			Commands.djsCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
+			break;
 		case Constants.Commands.WHOAMI:
 			Commands.whoamiCommand( argumentCommands, receivedMessage, client );
 			break;

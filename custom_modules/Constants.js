@@ -38,6 +38,7 @@ exports.Commands = {
     FILTERFROMLIVE: "filterfromlive",
     SETWORD: "setword",
     SETROLERESPONSE: "setroleresponse",
+    DJS: "djs",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
 }
@@ -94,6 +95,7 @@ exports.CommandsArray = [
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETWORD,
     this.Commands.SETROLERESPONSE,
+    this.Commands.DJS,
     this.Commands.WHOAMI,
 ];
 
@@ -114,6 +116,7 @@ exports.HiddenCommands = [
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETROLERESPONSE,
+    this.Commands.DJS,
 ];
 
 exports.ManagedCommands = [
@@ -138,6 +141,7 @@ exports.Permissions = {
     ADMIN: 'ADMINISTRATOR',
     KICKMEMBERS: 'KICK_MEMBERS',
     MENTIONEVERYONE: "MENTION_EVERYONE",
+    MANAGECHANNELS: "MANAGE_CHANNELS",
 }
 
 exports.ManagedServers = [
@@ -295,7 +299,7 @@ exports.Strings = {
     ALOSIDE: "There must be at least one side.",
     AGREEMOREARGS: "Please specify which role you would like to add first with `!agree role-name`.",
     AGREELESSARGS: "Please make sure you specify only one role you would like to add with `!agree role-name`.",
-    WRONGCODE: "That appears to be an incorrect code.",
+    WRONGCODE: "That appears to be an incorrect code. If you typed it incorrectly, you can try again.",
     // NOTCOMPLETEDPASTSTEP: "You may not have completed a previous step in the email verification process.",
     NOTCOMPLETEDPASTSTEP: "Your message has been sent to mods as feedback. Thanks!",
     RUTGERSEMAILPLS: "Please make sure you are entering a \"rutgers.edu\" email.",
@@ -408,12 +412,12 @@ exports.Strings = {
     VOICEROLE: "VOICE",
 
     // EMAIL FIELDS
-    REQUESTEMAIL: "Please enter your \"@scarletmail.rutgers.edu\" email to start the verification process. This email starts with your netID. **Do NOT enter an email that does is not formatted as yournetID1234@scarletmail.rutgers.edu, or the email will not send.**.",
+    REQUESTEMAIL: "Please enter your \"@scarletmail.rutgers.edu\" email to start the verification process. This is the email starts with your netID. **Do NOT enter an email that does is not formatted as yournetID1234@scarletmail.rutgers.edu or the email will not send.**",
     FROMNAME: "Rutgers Esports",
     SENDER: "rutgersesports",
     SUBJECT: "Verify your Rutgers Student role in Rutgers Esports Discord!",
     TEXT: "To verify your Rutgers Student Role in Rutgers Esports Discord, please respond to the bot with the following string, \n",
-    EMAILSENT: "Email successfully sent!",
+    EMAILSENT: "Attempting to send email. Check your email and enter the verification code to enter the server. If you didn't get the email, try checking your spam folder or re-entering your email.",
     VERIFIED: "Congratulations! You have now been verified as a Rutgers Student on the Rutgers Esports Discord!",
     ENDEMAILADDRESS: "@scarletmail.rutgers.edu",
 
@@ -431,7 +435,7 @@ exports.Strings = {
     WHOAMIDESCRIPTION: "I am a bot specially designed for the Rutgers Esports Discord.",
     PROGRAMMER: "Programmer: ",
     PROGRAMMERDESCRIPTION: "I was written by Arjun Srivastav, <@87525135241728000>. He wrote this as a member of the Systems and Tech committee at Rutgers Esports.",
-    SERVERSTATS: "Server Statistics: ",
+    SERVERSTATS: "Statistics: ",
     MEMBERCOUNT: "Members: ",
     WARNEDMEMBER: "Warned Member:",
     WARNEDBY: "Warned by:",
