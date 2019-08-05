@@ -119,6 +119,9 @@ Instructions = {
     SETROLERESPONSEINSTRUCTION: ["Set a custom response for the bot to DM a user when they add a certain role.",
         "setroleresponse <role-name> ; <message>",
         "Manage Channels"],
+    DJSINSTRUCTION: ["Dump API Information.",
+        "djs msg.?<api-access>.?<api-access>. ...",
+        "Admin"],
     SETTINGSINSTRUCTION: ["Change user settings for the bot or server settings if you have the right permissions. See personal and server settings.",
         "settings <name> <options>",
         null,
@@ -224,6 +227,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.SETROLERESPONSE:
                 generateCommandField( embed, Instructions.SETROLERESPONSEINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.DJS:
+                generateCommandField( embed, Instructions.DJSINSTRUCTION, prefix );
                 break;
             case Constants.Commands.SETTINGS:
                 generateCommandField( embed, Instructions.SETTINGSINSTRUCTION, prefix );

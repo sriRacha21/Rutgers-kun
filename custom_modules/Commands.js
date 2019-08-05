@@ -2247,7 +2247,8 @@ exports.djsCommand = function( arguments, msg, client, database, mysql, prefix )
             output = output === undefined ? msg[argument] : output[argument];
             if( output === undefined ) return;
         });
-        msg.channel.send( "API Output: \n```js\n" + util.inspect(output) + "\n```", {split: {char: "\n", prepend: `\`\`\`js`, append: "```"}} );
+        msg.channel.send( "API Output:" );
+        msg.channel.send( util.inspect(output), {split: true, code: 'js'} );
     }
 }
 
