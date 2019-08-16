@@ -1459,10 +1459,15 @@ exports.quoteCommand = function( arguments, msg, client, mysql, database, prefix
             return;
         }
 
+        let content = lastMessage.cleanContent;
+        msg.attachments.forEach(( attachment ) => {
+            content += `\n${attachment.proxyURL}`;
+        })
+
         // insert quote into database
         let query = mysql.format(
             `INSERT INTO quotes VALUES ( ?,?,? );`,
-            [ lastMessage.cleanContent, member.user.id, null ]
+            [ content, member.user.id, null ]
         );
         database.query( query, function( err, results ) {
             if( exports.errHandler(err,msg) ) return;
@@ -2201,7 +2206,10 @@ exports.setRoleResponseCommand = function( arguments, msg, client, database, mys
     }
     
     // split by comma instead of space
-    arguments = arguments.join(" ").split(" ; ");
+    let argumentsCopy = arguments;
+    arguments = [];
+    arguments.push( argumentsCopy.join(" ").split(", ").slice(0,1) );
+    arguments.push( argumentsCopy.join(" ").split(", ").slice(1).join(", ") );
 
     if( arguments.length != 2 ) {
         //help 
@@ -2226,7 +2234,38 @@ exports.setRoleResponseCommand = function( arguments, msg, client, database, mys
             if( exports.errHandler( err, msg ) ) return;
             msg.channel.send( `Successfully set message \`${message}\` for role ${role.name}.` );
         });
+    }
+}
+
+exports.setPingExceptionCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    if( !exports.isManagedServer( msg.guild ) ) {
+        msg.channel.send( Constants.Strings.NOTMANAGEDSERVERWARN );
         return;
+    }
+    if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    if( arguments.length != 1 ) {
+
+    } else {
+        let role = msg.guild.roles.find( role => role.name.toLowerCase() == arguments[0].toLowerCase() )
+        if( !role )
+            role = msg.mentions.roles.first();
+        if( !role ) {
+            msg.channel.send( "Role not found!" );
+            return;
+        }
+
+        let query = "INSERT INTO rolePingExcepts values ( ? );";
+        query = mysql.format( query, [role.id] );
+        if( DEBUG )
+            console.log( "built query: " + query );
+        database.query( query, function( err, results ) {
+            if( exports.errHandler( err, msg ) ) return;
+            msg.channel.send( `Successfully set ping exception for role ${role.name}.` );
+        });
     }
 }
 
@@ -2238,15 +2277,16 @@ exports.djsCommand = function( arguments, msg, client, database, mysql, prefix )
 
     arguments = arguments.join(" ").split(".");
     if( arguments[0] != "msg" )
-        msg.channel.send( "The API query must start with \`msg.\` ");
+        msg.channel.send( "The API query must start with \`msg\` ");
     else {
         arguments = arguments.slice(1);
-        let output;
+        let output = msg;
         // start access chain
-        arguments.forEach(( argument ) => {
-            output = output === undefined ? msg[argument] : output[argument];
-            if( output === undefined ) return;
-        });
+        for( let i = 0; i < arguments.length; i++ ) {
+            argument = arguments[i];
+            output = output[argument];
+            if( output === undefined ) break;
+        }
         msg.channel.send( "API Output:" );
         msg.channel.send( util.inspect(output), {split: true, code: 'js'} );
     }
@@ -2354,7 +2394,10 @@ function timeStringToArr( args ) {
     for( let i = 0; i < args.length; i++ ) {
         let arg = args[i];
         //check if this is the weeks argument
-        let lastChar = arg[arg.length - 1].toLowerCase();
+        let lastChar = arg[arg.length - 1];
+        if( lastChar === undefined )
+            return ["error"]
+        lastChar = arg[arg.length - 1].toLowerCase();
         switch( lastChar ) {
             case 'w':
                 weeks = arg.slice( 0, arg.length - 1 );

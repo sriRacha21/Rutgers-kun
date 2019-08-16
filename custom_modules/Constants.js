@@ -38,6 +38,7 @@ exports.Commands = {
     FILTERFROMLIVE: "filterfromlive",
     SETWORD: "setword",
     SETROLERESPONSE: "setroleresponse",
+    SETPINGEXCEPTION: "setpingexception",
     DJS: "djs",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
@@ -95,6 +96,7 @@ exports.CommandsArray = [
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETWORD,
     this.Commands.SETROLERESPONSE,
+    this.Commands.SETPINGEXCEPTION,
     this.Commands.DJS,
     this.Commands.WHOAMI,
 ];
@@ -116,6 +118,7 @@ exports.HiddenCommands = [
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETROLERESPONSE,
+    this.Commands.SETPINGEXCEPTION,
     this.Commands.DJS,
 ];
 
@@ -134,6 +137,7 @@ exports.ManagedCommands = [
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETROLERESPONSE,
+    this.Commands.SETPINGEXCEPTION,
 ];
 
 exports.Permissions = {
@@ -208,7 +212,7 @@ exports.Strings = {
     MEMBERSPURGED: "Members have been purged. Check the log for more details.",
     NOMEMBERSPURGED: "No members were purged.",
     WELCOMEMESSAGE: "Welcome, ",
-    WELCOMEMESSAGEEND: " to the Rutgers Esports Discord! Add roles by reacting in ",
+    WELCOMEMESSAGEEND: " to the Rutgers Esports Discord!\nAdd roles by reacting in ",
     WELCOMEMESSAGEEND2: " to see game channels.",
     FILTERADDED: "Filter successfully added for word: ",
     DURATION: "\nLasting: ",
@@ -395,6 +399,10 @@ exports.Strings = {
     RUTGERSESPORTS: 227615199950012416,
     ARJUNID: 87525135241728000,
     JOEYID: 223169696055296011,
+
+    // ROLE IDs
+    RUTGERSSTUDENTROLEID: 606560247103881226,
+    RUTGERSALUMNIROLEID: 230526532001595392,
     
     // USERs
     JOEYTAG: "joey#1337",

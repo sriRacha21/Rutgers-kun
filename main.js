@@ -152,17 +152,28 @@ client.on( 'message', (receivedMessage, settings) => {
 	}
 
 	// kick users if they mention any role and they have no perms.
-	if( receivedMessage.member === undefined || receivedMessage.member == null )
-		return;
-	if( !receivedMessage.member.hasPermission( Constants.Permissions.MENTIONEVERYONE ) ) {
+	let query = "SELECT role FROM rolePingExcepts;";
+	if( DEBUG )
+		console.log( "built query: " + query );
+	database.query( query, function( err, results ) {
+		if( receivedMessage.member === undefined || receivedMessage.member == null )
+			return;
+		if( !receivedMessage.member.hasPermission( Constants.Permissions.MENTIONEVERYONE ) ) {
 		let atLeastOneRoleMentioned = false;
 		let roleMentioned = "undefined";
+		let roleObjMentioned;
 		receivedMessage.mentions.roles.forEach(( role ) => {
 			if( !role.hasPermission( Constants.Permissions.KICKMEMBERS, false, true ) ) {
 				roleMentioned = role.name;
+				roleObjMentioned = role;
 				atLeastOneRoleMentioned = true;
 			}
 		});
+		for( let i = 0; i < results.length; i++ ) {
+			let result = results[i];
+			if( roleObjMentioned && result.role == roleObjMentioned.id )
+				return;
+		}
 		let attemptToPingEveryone = receivedMessage.content.includes( "@everyone" ) || receivedMessage.content.includes( "@here" );
 		if( atLeastOneRoleMentioned || attemptToPingEveryone ) {
 			if( !Commands.isManagedServer( receivedMessage.guild ) )
@@ -178,6 +189,7 @@ client.on( 'message', (receivedMessage, settings) => {
 			receivedMessage.author.send( Constants.Strings.MENTIONMUTE + Constants.Strings.DEFAULTMUTETIME + Constants.Strings.MENTIONMUTE2 );
 		}
 	}
+	});
 
 	// refetch filter words from commands
 	filterWords = Commands.filterWords;
@@ -206,7 +218,7 @@ client.on( 'message', (receivedMessage, settings) => {
 	rutgersChan( receivedMessage );
 
 	// word counter
-	let query = mysql.format('SELECT user,word,count FROM wordCounters WHERE user=?', receivedMessage.author.id);
+	query = mysql.format('SELECT user,word,count FROM wordCounters WHERE user=?', receivedMessage.author.id);
 	if( DEBUG )
 		console.log( "built query: " + query );
 	database.query( query, function( err, results ) {
@@ -219,7 +231,7 @@ client.on( 'message', (receivedMessage, settings) => {
 			if( receivedMessage.author.id == user && receivedMessage.content.toLowerCase().includes(word) ) {
 				let content = receivedMessage.content.toLowerCase();
 				let wordCount = (content.match(new RegExp(word,"g")) || []).length
-				receivedMessage.channel.send( `${receivedMessage.author.username} ${word} counter: ${count+wordCount}`);
+				receivedMessage.channel.send( `${receivedMessage.author.username}'s \`${word}\` counter: ${count+wordCount}`);
 				query = mysql.format(`UPDATE wordCounters SET count=count+? WHERE user=? AND word=?`, [wordCount,receivedMessage.author.id,word]);
 				if( DEBUG )
 					console.log( "built query: " + query );
@@ -993,6 +1005,9 @@ function processCommand( receivedMessage, htSettings ) {
 			break;
 		case Constants.Commands.SETROLERESPONSE:
 			Commands.setRoleResponseCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
+			break;
+		case Constants.Commands.SETPINGEXCEPTION:
+			Commands.setPingExceptionCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
 		case Constants.Commands.DJS:
 			Commands.djsCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );

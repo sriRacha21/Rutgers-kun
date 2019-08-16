@@ -117,8 +117,11 @@ Instructions = {
         null,
         ["delete"]],
     SETROLERESPONSEINSTRUCTION: ["Set a custom response for the bot to DM a user when they add a certain role.",
-        "setroleresponse <role-name> ; <message>",
+        "setroleresponse <role-name>, <message>",
         "Manage Channels"],
+    SETPINGEXCEPTIONINSTRUCTION: ["Set a role to be allowed to be pinged by anyone without muting them.",
+        "setpingexception <role-name>",
+        "Admin"],
     DJSINSTRUCTION: ["Dump API Information.",
         "djs msg.?<api-access>.?<api-access>. ...",
         "Admin"],
@@ -227,6 +230,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.SETROLERESPONSE:
                 generateCommandField( embed, Instructions.SETROLERESPONSEINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.SETPINGEXCEPTION:
+                generateCommandField( embed, Instructions.SETPINGEXCEPTIONINSTRUCTION, prefix );
                 break;
             case Constants.Commands.DJS:
                 generateCommandField( embed, Instructions.DJSINSTRUCTION, prefix );
