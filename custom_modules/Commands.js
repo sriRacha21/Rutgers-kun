@@ -11,6 +11,7 @@ const HashTable = require('hashtable');
 const htTimers = new HashTable();
 // This hash table stores the verification codes for Rutgers Student role approval.
 const htCodes = new HashTable();
+const htNewMemberRole = new HashTable();
 // This hash table associates user id's with their GuildMember object in RED.
 const htMembers = new HashTable();
 // This hash table stores an array of quotes associated with a GuildMember.
@@ -420,7 +421,7 @@ exports.scheduleCommand = function( arguments, msg, client, prefix ) {
                 channels[i].send( outStr, { files: files } );
         }, milliseconds );
         let durString = buildDurationString( weeks, days, hours, minutes, seconds );
-        msg.channel.send( Constants.Strings.SCHEDULEDANNOUNCEMENT + durString.substring( 0, durString.length - 1) + Constants.Strings.SCHEDULEDANNOUNCEMENT2 );
+        msg.channel.send( Constants.Strings.SCHEDULEDANNOUNCEMENT + durString.substring( 0, durString.length - 1) + Constants.Strings.SCHEDULEDANNOUNCEMENT2, {disableEveryone:false} );
     } else {
         Help.helpCommand( [Constants.Commands.SCHEDULE], msg, false, client, prefix );
     }
@@ -659,6 +660,7 @@ exports.ignoreCommand = function( arguments, msg, htIgnoredUsers, client, prefix
 exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, part ) {
     if( part == 1 ) {
         let user = msg.author;
+        let studentRole = getRoleByName( msg, Constants.Strings.SCHOOLROLE );
         let alumniRole = getRoleByName( msg, Constants.Strings.ALUMNIROLE );
         let guestRole = getRoleByName( msg, Constants.Strings.GUESTROLE );
         let privRole = getRoleByName( msg, Constants.Strings.PRIVROLE );
@@ -681,10 +683,14 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
             case Constants.Strings.SCHOOL.toLowerCase():
                 user.send( Constants.Strings.REQUESTEMAIL );
                 htMembers.put( user.id, msg.member );
+                htNewMemberRole.put( user.id, studentRole );
                 break;
             case Constants.Strings.ALUMNI.toLowerCase():
-                msg.member.addRoles( [alumniRole, privRole], Constants.Strings.ROLEREASON );
-                sendWelcomeMessage( msg.member );
+                // msg.member.addRoles( [alumniRole, privRole], Constants.Strings.ROLEREASON );
+                // sendWelcomeMessage( msg.member );
+                user.send( Constants.Strings.REQUESTEMAIL );
+                htMembers.put( user.id, msg.member );
+                htNewMemberRole.put( user.id, alumniRole );
                 break;
             case Constants.Strings.GUEST.toLowerCase():
                 msg.member.addRoles( [guestRole, privRole], Constants.Strings.ROLEREASON );
@@ -699,13 +705,13 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
             msg.author.send( Constants.Strings.NOTCOMPLETEDPASTSTEP );
             return;
         }
-        // let from = Constants.Strings.FROMNAME + " <" + Constants.Strings.SENDER + "@" + domain + ">";
+        let role = htNewMemberRole.get(msg.author.id);
         let from = `${Constants.Strings.SENDER}@${domain}`;
         let to = msg.content;
-        let subject = Constants.Strings.SUBJECT;
+        let subject = Constants.Strings.SUBJECT + role.name + Constants.Strings.SUBJECT2;
         let code = generateRandom( 0, 999999 );
         htCodes.put( msg.author.id, code );
-        let text = Constants.Strings.TEXT + code;
+        let text = Constants.Strings.TEXT + role.name + Constants.Strings.TEXT2 + code;
         sendEmail( msg, mailgun, from, to, subject, text );
     } else if( part == 3 ) {
         if( htMembers.get( msg.author.id ) === undefined || htCodes.get( msg.author.id ) === undefined ) {
@@ -714,13 +720,14 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
         }
         let member = htMembers.get( msg.author.id );
         let guild = member.guild;
-        let studentRole = exports.getRoleByNameGuild( guild, Constants.Strings.SCHOOLROLE );
+        let role = htNewMemberRole.get( msg.author.id );
+        // let studentRole = exports.getRoleByNameGuild( guild, Constants.Strings.SCHOOLROLE );
         let privRole = exports.getRoleByNameGuild( guild, Constants.Strings.PRIVROLE );
 
         let codeToCompare = msg.content;
         if( +codeToCompare == htCodes.get( msg.author.id ) ) {
-            msg.author.send( Constants.Strings.VERIFIED );
-            member.addRoles( [studentRole, privRole], Constants.Strings.ROLEREASON );
+            msg.author.send( Constants.Strings.VERIFIED + role.name + Constants.Strings.VERIFIED2 );
+            member.addRoles( [role, privRole], Constants.Strings.ROLEREASON );
             // clean hash table
             htMembers.remove( msg.author.id );
             htCodes.remove( msg.author.id );
@@ -1460,8 +1467,8 @@ exports.quoteCommand = function( arguments, msg, client, mysql, database, prefix
         }
 
         let content = lastMessage.cleanContent;
-        msg.attachments.forEach(( attachment ) => {
-            content += `\n${attachment.proxyURL}`;
+        lastMessage.attachments.forEach(( attachment ) => {
+            content += `${attachment.proxyURL}\n`;
         })
 
         // insert quote into database
@@ -1469,10 +1476,12 @@ exports.quoteCommand = function( arguments, msg, client, mysql, database, prefix
             `INSERT INTO quotes VALUES ( ?,?,? );`,
             [ content, member.user.id, null ]
         );
+        if( content != '' ) {
         database.query( query, function( err, results ) {
-            if( exports.errHandler(err,msg) ) return;
-            msg.channel.send( Constants.Strings.QUOTEADDSUCCESS + member.user.tag );
-        });
+                if( exports.errHandler(err,msg) ) return;
+                msg.channel.send( Constants.Strings.QUOTEADDSUCCESS + member.user.tag );
+            });
+        }
     } else {
         Help.helpCommand( [Constants.Commands.QUOTE], msg, false, client, prefix );
     }

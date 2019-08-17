@@ -12,7 +12,7 @@ const EXPERIMENTAL = false;
 
 // imports
 const Discord = require('discord.js')
-const client = new Discord.Client()
+const client = new Discord.Client({disableEveryone:true})
 const { Client, RichEmbed } = require('discord.js')
 const Constants = require( './custom_modules/Constants.js' )
 

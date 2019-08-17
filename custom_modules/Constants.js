@@ -423,10 +423,13 @@ exports.Strings = {
     REQUESTEMAIL: "Please enter your \"@scarletmail.rutgers.edu\" email to start the verification process. This is the email starts with your netID. **Do NOT enter an email that does is not formatted as yournetID1234@scarletmail.rutgers.edu or the email will not send.**",
     FROMNAME: "Rutgers Esports",
     SENDER: "rutgersesports",
-    SUBJECT: "Verify your Rutgers Student role in Rutgers Esports Discord!",
-    TEXT: "To verify your Rutgers Student Role in Rutgers Esports Discord, please respond to the bot with the following string, \n",
+    SUBJECT: "Verify your ",
+    SUBJECT2: " role in Rutgers Esports Discord!",
+    TEXT: "To verify your ",
+    TEXT2: " role in Rutgers Esports Discord, please respond to the bot with the following string, \n",
     EMAILSENT: "Attempting to send email. Check your email and enter the verification code to enter the server. If you didn't get the email, try checking your spam folder or re-entering your email.",
-    VERIFIED: "Congratulations! You have now been verified as a Rutgers Student on the Rutgers Esports Discord!",
+    VERIFIED: "Congratulations! You have now been verified as a ",
+    VERIFIED2: " on the Rutgers Esports Discord!",
     ENDEMAILADDRESS: "@scarletmail.rutgers.edu",
 
     // DEFAULTS
