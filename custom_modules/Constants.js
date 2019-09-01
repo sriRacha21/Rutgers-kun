@@ -36,9 +36,11 @@ exports.Commands = {
     SETTINGS: "settings",
     UPDATERULES: "updaterules",
     FILTERFROMLIVE: "filterfromlive",
+    DM: "dm",
     SETWORD: "setword",
     SETROLERESPONSE: "setroleresponse",
     SETPINGEXCEPTION: "setpingexception",
+    SETAUTOVERIFY: "setautoverify",
     DJS: "djs",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
@@ -94,9 +96,11 @@ exports.CommandsArray = [
     this.Commands.SETTINGS,
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
+    this.Commands.DM,
     this.Commands.SETWORD,
     this.Commands.SETROLERESPONSE,
     this.Commands.SETPINGEXCEPTION,
+    this.Commands.SETAUTOVERIFY,
     this.Commands.DJS,
     this.Commands.WHOAMI,
 ];
@@ -117,8 +121,10 @@ exports.HiddenCommands = [
     this.Commands.PURGE,
     this.Commands.UPDATERULES,
     this.Commands.FILTERFROMLIVE,
+    this.Commands.DM,
     this.Commands.SETROLERESPONSE,
     this.Commands.SETPINGEXCEPTION,
+    this.Commands.SETAUTOVERIFY,
     this.Commands.DJS,
 ];
 
@@ -138,6 +144,7 @@ exports.ManagedCommands = [
     this.Commands.FILTERFROMLIVE,
     this.Commands.SETROLERESPONSE,
     this.Commands.SETPINGEXCEPTION,
+    this.Commands.SETAUTOVERIFY,
 ];
 
 exports.Permissions = {

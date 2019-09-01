@@ -110,6 +110,9 @@ Instructions = {
     FILTERFROMLIVEINSTRUCTION: ["Filter a user from getting the live role.",
         "filterfromlive @member",
         "Admin"],
+    DMINSTRUCTION: ["DM a user.",
+        "dm @member <message>",
+        "Admin"],
     SETWORDINSTRUCTION: ["Add a word to be tracked for a certain user.",
         "setword ?@member <word>",
         null,
@@ -121,6 +124,9 @@ Instructions = {
         "Manage Channels"],
     SETPINGEXCEPTIONINSTRUCTION: ["Set a role to be allowed to be pinged by anyone without muting them.",
         "setpingexception <role-name>",
+        "Admin"],
+    SETAUTOVERIFYINSTRUCTION: ["Set a message that can be sent to #agreement to auto-verify the user to enter the server. For use at events.",
+        "setautoverify <word>",
         "Admin"],
     DJSINSTRUCTION: ["Dump API Information.",
         "djs msg.?<api-access>.?<api-access>. ...",
@@ -225,6 +231,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
             case Constants.Commands.FILTERFROMLIVE:
                 generateCommandField( embed, Instructions.FILTERFROMLIVEINSTRUCTION, prefix );
                 break;
+            case Constants.Commands.DM:
+                generateCommandField( embed, Instructions.DMINSTRUCTION, prefix );
+                break;
             case Constants.Commands.SETWORD:
                 generateCommandField( embed, Instructions.SETWORDINSTRUCTION, prefix );
                 break;
@@ -233,6 +242,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.SETPINGEXCEPTION:
                 generateCommandField( embed, Instructions.SETPINGEXCEPTIONINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.SETAUTOVERIFY:
+                generateCommandField( embed, Instructions.SETAUTOVERIFYINSTRUCTION, prefix );
                 break;
             case Constants.Commands.DJS:
                 generateCommandField( embed, Instructions.DJSINSTRUCTION, prefix );

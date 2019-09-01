@@ -657,7 +657,7 @@ exports.ignoreCommand = function( arguments, msg, htIgnoredUsers, client, prefix
  * @param {HashTable} htNewMembers - The {@link HashTable} containing timers of new members.
  * @param {number} part - The part of the agree command to invoke. Part 1 processes !agree, part 2 processes the email, part 3 processes the verification code and part 4 happens when the command is not executed in the right channel.
  */
-exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, part ) {
+exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, part, skipping ) {
     if( part == 1 ) {
         let user = msg.author;
         let studentRole = getRoleByName( msg, Constants.Strings.SCHOOLROLE );
@@ -665,12 +665,18 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
         let guestRole = getRoleByName( msg, Constants.Strings.GUESTROLE );
         let privRole = getRoleByName( msg, Constants.Strings.PRIVROLE );
 
+        if( skipping && msg.channel.name == Constants.Strings.AGREEMENT ) {
+            msg.member.addRoles( [studentRole, privRole], Constants.Strings.ROLEREASON );
+            sendWelcomeMessage( msg.member );
+            return;
+        }
+
         if( msg.channel.name != Constants.Strings.AGREEMENT ) {
             let agreementChannel = getChannelByName( msg, Constants.Strings.AGREEMENT );
             msg.channel.send( Constants.Strings.NOTAGREEMENT + agreementChannel + Constants.Strings.NOTAGREEMENT2 );
             return;
         }
-
+    
         if( arguments.length == 0 ) {
             user.send( Constants.Strings.AGREEMOREARGS );
             return;
@@ -2141,6 +2147,37 @@ exports.filterFromLiveCommand = function( arguments, msg, mysql, database ) {
     });
 }
 
+exports.dmCommand = function( arguments, msg ) {
+    if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    let user = msg.mentions.members.first()
+    // try get by snowflake
+    if( !user ) {
+        user = msg.member.guild.member( arguments[0] );
+        if( user )
+            user = user.user;
+    }
+
+    if( !user ) {
+        msg.channel.send( Constants.Strings.USERNOTFOUNDWARN );
+        return;
+    }
+
+    message = arguments.slice(1).join(" ");
+
+    let files = [];
+    msg.attachments.forEach(( a ) => {
+        files.push( a.proxyURL );
+    })
+
+    user.send( message, {split: true, files: files} );
+
+    msg.react( Constants.Strings.THUMBSUP );
+}
+
 exports.setWordCommand = function( arguments, msg, client, database, mysql, prefix ) {
     if( arguments.length < 1 )
         Help.helpCommand( [Constants.Commands.SETWORD], msg, false, client, prefix );
@@ -2276,6 +2313,37 @@ exports.setPingExceptionCommand = function( arguments, msg, client, database, my
             msg.channel.send( `Successfully set ping exception for role ${role.name}.` );
         });
     }
+}
+
+exports.setAutoVerifyCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    if( !arguments[0] ) {
+        Help.helpCommand( [Constants.Commands.SETAUTOVERIFY], msg, false, client, prefix );
+        return;
+    }
+
+    let clearing = false;
+    let word = arguments[0];
+    if( word == 'clear' )
+        clearing = true;
+    let query = `INSERT INTO autoverify values ( ? )`;
+    if( !clearing )
+        query = mysql.format(query,[arguments[0]]);
+    else
+        query = `DELETE FROM autoverify`;
+    if( DEBUG )
+        console.log( "built query: " + query );
+    database.query( query, function( err, results ) {
+        if( exports.errHandler( err, msg ) ) return;
+        if( !clearing )
+            msg.channel.send( `Successfully set auto-verify word \`${word}\`.`)
+        else
+            msg.channel.send( `Successfully cleared auto-verify table.` );
+    });
 }
 
 exports.djsCommand = function( arguments, msg, client, database, mysql, prefix ) {

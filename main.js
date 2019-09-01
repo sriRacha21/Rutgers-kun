@@ -845,9 +845,20 @@ function processCommand( receivedMessage, htSettings ) {
 	console.log( "Args: " + argumentCommandsClean )
 
 	if( receivedMessage.channel.name == Constants.Strings.AGREEMENT ) {
-		if( command == Constants.Commands.AGREE )
-			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, argumentCommandsRemovePunctuation, receivedMessage, htNewMembers, 1 );
+		let query = `SELECT word FROM autoverify`;
+		if( DEBUG )
+			console.log( "built query: " + query );
+		database.query( query, function( err, results ) {
+			results.forEach(( result ) => {
+				word = result.word;
+				if( word == receivedMessage.cleanContent.toLowerCase() )
+					Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, argumentCommandsRemovePunctuation, receivedMessage, htNewMembers, 1, true );
+			})
+			if( command == Constants.Commands.AGREE )
+				Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, argumentCommandsRemovePunctuation, receivedMessage, htNewMembers, 1 );
+		})
 		return;
+		
 	}
 	
 	if( !receivedMessage.member.hasPermission(Constants.Permissions.ADMIN) && disabledCommands.includes(command) ) {
@@ -1000,6 +1011,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.FILTERFROMLIVE:
 			Commands.filterFromLiveCommand( argumentCommands, receivedMessage, mysql, database );
 			break;
+		case Constants.Commands.DM:
+			Commands.dmCommand( argumentCommands, receivedMessage );
+			break;
 		case Constants.Commands.SETWORD:
 			Commands.setWordCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
@@ -1008,6 +1022,9 @@ function processCommand( receivedMessage, htSettings ) {
 			break;
 		case Constants.Commands.SETPINGEXCEPTION:
 			Commands.setPingExceptionCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
+			break;
+		case Constants.Commands.SETAUTOVERIFY:
+			Commands.setAutoVerifyCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
 		case Constants.Commands.DJS:
 			Commands.djsCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
