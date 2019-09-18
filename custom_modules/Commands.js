@@ -704,8 +704,10 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
                 break;
         }
 
-        clearTimeout( htNewMembers.get( msg.member.id ) );
-        htNewMembers.remove( msg.member.id );
+        if( htNewMembers.get( msg.member.id ) ) {
+            clearTimeout( htNewMembers.get( msg.member.id ) );
+            htNewMembers.remove( msg.member.id );
+        }
     } else if( part == 2 ) {
         if( htMembers.get( msg.author.id ) === undefined ) {
             msg.author.send( Constants.Strings.NOTCOMPLETEDPASTSTEP );
@@ -1945,6 +1947,40 @@ exports.purgeCommand = function( arguments, msg ) {
     }
 }
 
+exports.chainCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    let query = "SELECT * FROM chainHighscores WHERE server=?";
+    query = mysql.format( query, msg.guild.id );
+    if( DEBUG )
+        console.log( "built query: " + query );
+    database.query( query, function( err, results ) {
+        if( results.length == 0 ) {
+            msg.channel.send( "No highscores for this server yet." );
+            return;
+        }
+        let guild = client.guilds.find( guild => guild.id == results[0].server );
+        if( !guild ) {
+            msg.channel.send( "Guild not found!" );
+            return;
+        }
+        let channel = guild.channels.find( channel => channel.id == results[0].channel );
+        let breaker = guild.members.find( member => member.user.id == results[0].breaker );
+        let message = results[0].message;
+        let count = results[0].size;
+        let timestamp = results[0].timestamp;
+        let embed = new RichEmbed()
+            .setAuthor( `Longest chain in server ${guild.name}`, client.user.displayAvatarURL )
+            .setTitle( `Count: ${count}` )
+            .setColor(0xFF0000)
+            .addField( "Message", message )
+            .addField( "Channel", channel )
+            .addField( "Breaker", breaker )
+            .setThumbnail( client.user.displayAvatarURL )
+            .setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
+    
+        msg.channel.send( embed );
+    });
+}
+
 exports.settingsCommand = function( arguments, msg, database, client, prefix, htSettings ) {
     let place;
     let name;
@@ -2254,7 +2290,7 @@ exports.setRoleResponseCommand = function( arguments, msg, client, database, mys
     // split by comma instead of space
     let argumentsCopy = arguments;
     arguments = [];
-    arguments.push( argumentsCopy.join(" ").split(", ").slice(0,1) );
+    arguments.push( (argumentsCopy.join(" ").split(", ").slice(0,1))[0] );
     arguments.push( argumentsCopy.join(" ").split(", ").slice(1).join(", ") );
 
     if( arguments.length != 2 ) {

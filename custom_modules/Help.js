@@ -131,6 +131,8 @@ Instructions = {
     DJSINSTRUCTION: ["Dump API Information.",
         "djs msg.?<api-access>.?<api-access>. ...",
         "Admin"],
+    CHAININSTRUCTION: ["Show longest chain in this server.",
+        "chain"],
     SETTINGSINSTRUCTION: ["Change user settings for the bot or server settings if you have the right permissions. See personal and server settings.",
         "settings <name> <options>",
         null,
@@ -156,10 +158,10 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 generateCommandField( embed, Instructions.MUTEINSTRUCTION, prefix );
                 break;
             case Constants.Commands.UNMUTE:
-                generateCommandField( embed, Instructions.UNMUTEINSTRUCTION, Formats.UNMUTEFORMAT, Restrictions.UNMUTERESTRICTION, prefix );
+                generateCommandField( embed, Instructions.UNMUTEINSTRUCTION, /*Formats.UNMUTEFORMAT, Restrictions.UNMUTERESTRICTION,*/ prefix );
                 break;
             case Constants.Commands.IGNORE:
-                generateCommandField( embed, Instructions.IGNOREINSTRUCTION, Formats.IGNOREFORMAT, Restriction.IGNORERESTRICTION, prefix );
+                generateCommandField( embed, Instructions.IGNOREINSTRUCTION, /*Formats.IGNOREFORMAT, Restriction.IGNORERESTRICTION,*/ prefix );
                 break;
             case Constants.Commands.EIGHTBALL:
                 generateCommandField( embed, Instructions.EIGHTBALLINSTRUCTION, prefix );
@@ -248,6 +250,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.DJS:
                 generateCommandField( embed, Instructions.DJSINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.CHAIN:
+                generateCommandField( embed, Instructions.CHAININSTRUCTION, prefix );
                 break;
             case Constants.Commands.SETTINGS:
                 generateCommandField( embed, Instructions.SETTINGSINSTRUCTION, prefix );

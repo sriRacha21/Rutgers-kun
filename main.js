@@ -102,6 +102,7 @@ client.on( 'message', (receivedMessage, settings) => {
 			DMEmbed.addField(  "**Attachment " + i + ":**\nFilename: " + attachment.filename, attachment.proxyURL )
 			i++;
 		});
+		DMEmbed.addField( "User ID: ", receivedMessage.author.id );
 		Commands.sendMessage( client, DMEmbed, "Rutgers Esports", "botlog" );
 		if( receivedMessage.content.endsWith( Constants.Strings.SCHOOL.toLowerCase() + ".edu" )  )
 			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 2 );
@@ -261,7 +262,7 @@ client.on( 'message', (receivedMessage, settings) => {
 		if( secondToLastMessage
 			&& !samePersonTwice
 			&& secondToLastMessage.author.id != receivedMessage.author.id
-			&& secondToLastMessage.content == receivedMessage.content
+			&& secondToLastMessage.cleanContent == receivedMessage.content
 			&& receivedMessage.content != "") {
 			////////// CHAIN HIT //////////
 			// add to record of messages in chain
@@ -304,8 +305,39 @@ client.on( 'message', (receivedMessage, settings) => {
 			}
 		} else {
 			///////// CHAIN MISS ////////
-			if( htChainCounter.get( receivedMessage.channel.id ) > 2 )
+			let count = htChainCounter.get( receivedMessage.channel.id );
+			if( count > 2 ) {
 				receivedMessage.react( Constants.Strings.ANGRY );
+				// if( receivedMessage.guild.id == 291367115565301763 ) { 
+					let query = "SELECT * FROM chainHighscores WHERE server=?";
+					query = mysql.format( query, [receivedMessage.guild.id] );
+					if( DEBUG )
+						console.log( "built query: " + query );
+					database.query( query, function( err, results ) {
+						if( Commands.errHandler( err, receivedMessage ) ) return;
+						if( results.length == 0 || results[0].size < count ) {
+							let query = "INSERT INTO chainHighscores values( ?,?,?,?,?,null ) ON DUPLICATE KEY UPDATE channel=?, breaker=?, message=?, size=?";
+							query = mysql.format( query,
+								[
+									receivedMessage.guild.id,
+									receivedMessage.channel.id,
+									receivedMessage.member.user.id,
+									secondToLastMessage.cleanContent,
+									count,
+									receivedMessage.channel.id,
+									receivedMessage.member.user.id,
+									secondToLastMessage.cleanContent,
+									count
+								]
+							);
+							if( DEBUG )
+								console.log( "built query: " + query );
+							database.query( query, function( err, results ) { if( Commands.errHandler( err, receivedMessage ) ) return; });
+							receivedMessage.channel.send( `NEW HIGHSCORE for server \`${receivedMessage.guild.name}\` with message \`${secondToLastMessage.cleanContent}\` of length \`${count}\`!`);
+						}
+					});
+				// }
+			}
 			htChainMessages.remove( receivedMessage.channel.id );
 			htChainCounter.remove( receivedMessage.channel.id );
 		}
@@ -1001,6 +1033,9 @@ function processCommand( receivedMessage, htSettings ) {
 			break;
 		case Constants.Commands.PURGE:
 			Commands.purgeCommand( argumentCommands, receivedMessage );
+			break;
+		case Constants.Commands.CHAIN:
+			Commands.chainCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
 		case Constants.Commands.SETTINGS:
 			Commands.settingsCommand( argumentCommands, receivedMessage, database, client, prefix, htSettings );
