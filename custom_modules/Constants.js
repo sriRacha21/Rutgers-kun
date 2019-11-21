@@ -407,6 +407,7 @@ exports.Strings = {
     // USER IDs
     RUTGERSESPORTS: 227615199950012416,
     ARJUNID: 87525135241728000,
+    KATEID: 579500625704910868,
     JOEYID: 223169696055296011,
 
     // ROLE IDs
@@ -460,7 +461,23 @@ exports.Strings = {
     WARNEDMEMBER: "Warned Member:",
     WARNEDBY: "Warned by:",
     TIME: "Time:",
+
+    // KATE 1 MONTH GIFT STRINGS
+    KATEFIRSTTIMEMSG: "Hi Kate habibi! I see this is your first time using me so I'll explain briefly how I work. By default I submit all DM's to a channel in Rutgers Esports but because you are Kate, your DM's aren't logged anywhere. Your identity is saved by user ID, so even if you change your username or unique name I will always recognize you. If you want to talk to me, just say \"hey\". To stop talking to me and have me treat you like other users just say \"bye\".",
+    KATEHELP: "I can send random pictures of Arjun by receiving a message with his name, send random memes if you just send a message with the word \"meme\" and I also respond to \"I love you!\""
 }
+
+exports.KATEMESSAGES = [
+    "Kate you're my habibi!",
+    "Kate is my lil bun!",
+    "I love you, Kate.",
+    "You're my honey bun!",
+    "E",
+    "So basically im monky.",
+    "Uh oh...",
+    "*pomf*",
+    "Kate is my lil mooncake!",
+]
 
 ////////// RUTGERS CHAN /////////////
 exports.HEARTEMOTES = [

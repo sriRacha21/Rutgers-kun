@@ -89,27 +89,103 @@ client.on( 'message', (receivedMessage, settings) => {
 
 	// this block is for the email verification stuff.
 	if( receivedMessage.channel.type == 'dm' ) {
-		let DMEmbed = new RichEmbed()
-			.setAuthor( "DM Received from:", client.user.displayAvatarURL )
-			.setTitle( receivedMessage.author.tag )
-			.setColor(0xFF0000)
-			.setThumbnail( receivedMessage.author.displayAvatarURL )
-			.setFooter( Constants.Strings.TIMESTAMP + receivedMessage.createdAt );
-		if( receivedMessage.content )
-			DMEmbed.addField( "Contents:", receivedMessage.content )
-		let i = 1;
-		receivedMessage.attachments.forEach(( attachment ) => {
-			DMEmbed.addField(  "**Attachment " + i + ":**\nFilename: " + attachment.filename, attachment.proxyURL )
-			i++;
+		// check if user is kate or not kate and respond appropriately
+		let query = "SELECT * FROM kate;"
+		if( DEBUG )
+			console.log( "built query: " + query );
+		database.query( query, function( err, results ) {
+			if( Commands.errHandler( err, receivedMessage ));
+			// check if user is kate
+			if( results.length != 1 ) {
+				receivedMessage.author.send( "This wasn't supposed to happen D: Please contact Arjun!" );
+			} else {
+				if( DEBUG )
+					console.log( `DEBUG INFO: resultsIdentity: ${results[0].identity}, received identity: ${receivedMessage.author.id}, firstTime?: ${results[0].firstTime}` );
+				// this user is kate and it's her first time using me!
+				if( results[0].identity == receivedMessage.author.id && results[0].firstTime == 0) {
+					// this is kate's first time using this interface, so send a first time message
+					receivedMessage.author.send( Constants.Strings.KATEFIRSTTIMEMSG );
+					let query = "UPDATE kate SET firstTime=1;"
+					if( DEBUG )
+						console.log( "built query: " + query );
+					database.query( query, function( err, results ) { if( Commands.errHandler( err, receivedMessage )); });
+				// this user is kate, it's not her first time, and she said "hey" so we'll start treating her like Kate until she says "bye"
+				} else if( results[0].identity == receivedMessage.author.id && receivedMessage.cleanContent.toLowerCase() == "hey" ) {
+					// kate mode on and attempting to turn it on again
+					if( results[0].kateMode == 1 )
+						receivedMessage.author.send( "Kate mode is already on but I'll turn it on again for you! *boop*" );
+					else { // kate mode off, turning on
+						receivedMessage.author.send( "Kate mode is on!" );
+						query = "UPDATE kate SET kateMode=1;"
+						if( DEBUG )
+							console.log( "built query: " + query );
+						database.query( query, function( err, results ) { if( Commands.errHandler( err, receivedMessage ) ) return; });
+					}
+				} else if( results[0].identity == receivedMessage.author.id && receivedMessage.cleanContent.toLowerCase() == "bye" ) {
+					if( results[0].kateMode == 0 )
+						receivedMessage.author.send( "Kate mode is off, but I'll turn it off again. :(" );
+					else {
+						receivedMessage.author.send( "Leaving Kate mode! Bye... :(" );
+						query = "UPDATE kate SET kateMode=0;"
+						if( DEBUG )
+							console.log( "built query: " + query );
+						database.query( query, function( err, results ) { if( Commands.errHandler( err, receivedMessage ) ) return; });
+					}
+					// this is kate and kate mode is on. This is where the interesting stuff is.
+				} else if( results[0].identity == receivedMessage.author.id && results[0].kateMode == 1 ) {
+					// if the message includes arjun get a random picture of me
+					if( receivedMessage.cleanContent.toLowerCase().includes("arjun") ) {
+						// get number of files in the arjun photos folder.
+						let fileCount = execSync( 'ls -l /root/Rutgers-kun/resources/arjunphotos | wc -l' );
+						fileCount = fileCount - 1;
+						// output a random photo from that folder
+						let filenum = Commands.generateRandom( 0, fileCount - 1 );
+						receivedMessage.author.send({
+							files: [ `/root/Rutgers-kun/resources/arjunphotos/image${filenum}.jpg` ]
+						})
+					} else if( receivedMessage.cleanContent.toLowerCase().includes("boomer") )
+						receivedMessage.author.send("okay :(");
+					else if( receivedMessage.cleanContent.toLowerCase().includes("i love you") )
+						receivedMessage.author.send("I love you too! " + Constants.HEARTEMOTES[Commands.generateRandom(0,Constants.HEARTEMOTES.length-1)]);
+					else if( receivedMessage.cleanContent.toLowerCase().includes("meme") ) {
+						// get random meme from folder and send that
+						let files = execSync( 'ls /root/Rutgers-kun/resources/kateMemes/' );
+						files = files.toString().split('\n');
+						let file = '/root/Rutgers-kun/resources/kateMemes/';
+						file += files[Commands.generateRandom(0,files.length-1)];
+						receivedMessage.author.send({
+							files: [ file ]
+						});
+					} else if( receivedMessage.cleanContent.toLowerCase().includes("help") )
+						receivedMessage.author.send( Constants.Strings.KATEHELP );
+					else // random kate message
+						receivedMessage.author.send( Constants.KATEMESSAGES[Commands.generateRandom(0,Constants.KATEMESSAGES.length)] );
+				} else { // this user is not kate!
+					let DMEmbed = new RichEmbed()
+						.setAuthor( "DM Received from:", client.user.displayAvatarURL )
+						.setTitle( receivedMessage.author.tag )
+						.setColor(0xFF0000)
+						.setThumbnail( receivedMessage.author.displayAvatarURL )
+						.setFooter( Constants.Strings.TIMESTAMP + receivedMessage.createdAt );
+					if( receivedMessage.content )
+						DMEmbed.addField( "Contents:", receivedMessage.content )
+					let i = 1;
+					receivedMessage.attachments.forEach(( attachment ) => {
+						DMEmbed.addField(  "**Attachment " + i + ":**\nFilename: " + attachment.filename, attachment.proxyURL )
+						i++;
+					});
+					DMEmbed.addField( "User ID: ", receivedMessage.author.id );
+					Commands.sendMessage( client, DMEmbed, "Rutgers Esports", "botlog" );
+					if( receivedMessage.content.endsWith( Constants.Strings.SCHOOL.toLowerCase() + ".edu" )  )
+						Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 2 );
+					else if( receivedMessage.content.endsWith( ".com" ) )
+						receivedMessage.channel.send( Constants.Strings.RUTGERSEMAILPLS );
+					else
+						Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 3 );
+					return;
+				}
+			}
 		});
-		DMEmbed.addField( "User ID: ", receivedMessage.author.id );
-		Commands.sendMessage( client, DMEmbed, "Rutgers Esports", "botlog" );
-		if( receivedMessage.content.endsWith( Constants.Strings.SCHOOL.toLowerCase() + ".edu" )  )
-			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 2 );
-		else if( receivedMessage.content.endsWith( ".com" ) )
-			receivedMessage.channel.send( Constants.Strings.RUTGERSEMAILPLS );
-		else
-			Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, [], receivedMessage, htNewMembers, 3 );
 		return;
 	}
 
@@ -152,7 +228,7 @@ client.on( 'message', (receivedMessage, settings) => {
 		}
 	}
 
-	// kick users if they mention any role and they have no perms.
+	// automute users if they mention any role and they have no perms.
 	let query = "SELECT role FROM rolePingExcepts;";
 	if( DEBUG )
 		console.log( "built query: " + query );
@@ -217,6 +293,8 @@ client.on( 'message', (receivedMessage, settings) => {
 
 	// if rutgers-kun sees his love, heart emote react
 	rutgersChan( receivedMessage );
+	// hit that fat reroll
+	reroll( receivedMessage );
 
 	// word counter
 	query = mysql.format('SELECT user,word,count FROM wordCounters WHERE user=?', receivedMessage.author.id);
@@ -1111,6 +1189,21 @@ function rutgersChan( msg ) {
 			msg.react( emote );
 		} else
 			msg.channel.send( "Oh? The busses don't come on time? Too fucking bad!" );
+	}
+}
+
+function reroll( msg ) {
+	let message = msg.content.toLowerCase();
+	if( message.includes('arjun') && (message.includes('won') || message.includes('win')) && message.includes('giveaway') ) {
+		let random = Math.random()
+		if( random < 0.9 )
+			msg.channel.send( 'I hit that fat reroll' );
+		else
+			msg.channel.send({
+				files: [
+					'resources/reroll.png'
+				]
+			})
 	}
 }
 

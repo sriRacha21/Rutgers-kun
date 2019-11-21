@@ -703,8 +703,7 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
                 sendWelcomeMessage( msg.member );
                 break;
         }
-
-        if( htNewMembers.get( msg.member.id ) ) {
+        if( msg.member && htNewMembers.get( msg.member.id ) ) {
             clearTimeout( htNewMembers.get( msg.member.id ) );
             htNewMembers.remove( msg.member.id );
         }
@@ -717,7 +716,7 @@ exports.agreeCommand = function( mailgun, domain, arguments, msg, htNewMembers, 
         let from = `${Constants.Strings.SENDER}@${domain}`;
         let to = msg.content;
         let subject = Constants.Strings.SUBJECT + role.name + Constants.Strings.SUBJECT2;
-        let code = generateRandom( 0, 999999 );
+        let code = exports.generateRandom( 0, 999999 );
         htCodes.put( msg.author.id, code );
         let text = Constants.Strings.TEXT + role.name + Constants.Strings.TEXT2 + code;
         sendEmail( msg, mailgun, from, to, subject, text );
@@ -768,7 +767,7 @@ exports.eightBallCommand = function( arguments, msg, client, prefix ) {
     if( lastCharacter != '?' ) {
         msg.channel.send( Constants.Strings.ASKQUESTION );
     } else {
-        let random = generateRandom( 0, 9 );
+        let random = exports.generateRandom( 0, 9 );
         let eightBallString = Constants.eightBallResponses[random];
         msg.channel.send( eightBallString );
     }
@@ -871,7 +870,7 @@ exports.rollCommand = function( arguments, msg, client, prefix ) {
             return;
         }
         for( let i = 0; i < numDice; i++ )
-            rolls.push( generateRandom( 1, sides ) );
+            rolls.push( exports.generateRandom( 1, sides ) );
 
         let rollsStr = "";
         let sum = 0;
@@ -1518,13 +1517,15 @@ exports.quotesCommand = function( arguments, msg, database, client, prefix ) {
             .setColor(0xFF0000)
             .setThumbnail( `${member.user.displayAvatarURL}` )
             .setFooter( client.user.tag, client.user.displayAvatarURL );
-        let query = `SELECT message FROM quotes WHERE user=${member.user.id}`;
+        let query = `SELECT message FROM quotes WHERE user=${member.user.id} LIMIT 20`;
         if( DEBUG )
             console.log( "built query: " + query );
         database.query( query, function( err, results ) {
             if( exports.errHandler( err, msg ) ) return;
-            for( let i = 0; i < results.length; i++ )
-                embed.addField( `Quote ${i+1}:`, results[i].message );
+            for( let i = 0; i < results.length; i++ ) {
+                if( results[i].message.length < 1024 )
+                    embed.addField( `Quote ${i+1}:`, results[i].message );
+            }
             msg.channel.send( embed.fields.length == 0 ? "User has no quotes." : embed );
         })
     } else {
@@ -1945,6 +1946,16 @@ exports.purgeCommand = function( arguments, msg ) {
     } else {
         msg.channel.send( Constants.Strings.PURGEWARNING );
     }
+}
+
+// this might not work
+exports.performQuery = function( query, database, mysql, msg, callback ) {
+    if( DEBUG )
+        console.log( "built query: " + query );
+    database.query( query, function( err, results ) {
+        if( exports.errHandler( err, msg ) ) return;
+        callback();
+    })
 }
 
 exports.chainCommand = function( arguments, msg, client, database, mysql, prefix ) {
@@ -2619,10 +2630,21 @@ exports.errHandler = function( err, msg ) {
         return true;
     }
     if( err ) {
-        msg.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
+        if( msg.channel )
+            msg.channel.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
+        else
+            msg.author.send( `Error encountered: \`\`\`\n${err.sqlMessage}\n\`\`\`` );
         return true;
     }
     return false;
+}
+
+exports.msgChannelOrAuthorSend = function( msg, string ) {
+    if( msg.channel )
+        msg.channel.send( string );
+    else
+        msg.author.send( string );
+    return;
 }
 
 function calcMilliseconds( weeks, days, hours, minutes, seconds ) {
@@ -2723,7 +2745,7 @@ function sendEmail( msg, mailgun, from, to, subject, text ) {
  * @param {number} max - The max number that can be generated.
  * @returns {number} The random number that has been generated.
  */
-function generateRandom( min, max ) {
+exports.generateRandom = function( min, max ) {
     let random = Math.floor(Math.random() * (max - min + 1)) + min;
     return random;
 }
