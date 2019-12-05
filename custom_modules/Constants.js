@@ -42,6 +42,7 @@ exports.Commands = {
     SETROLERESPONSE: "setroleresponse",
     SETPINGEXCEPTION: "setpingexception",
     SETAUTOVERIFY: "setautoverify",
+    SETTRANSACTIONCHANNEL: "settransactionchannel",
     DJS: "djs",
     WHOAMI: "whoami",
     LASTCOMMAND: "",
@@ -103,6 +104,7 @@ exports.CommandsArray = [
     this.Commands.SETROLERESPONSE,
     this.Commands.SETPINGEXCEPTION,
     this.Commands.SETAUTOVERIFY,
+    this.Commands.SETTRANSACTIONCHANNEL,
     this.Commands.DJS,
     this.Commands.WHOAMI,
 ];
@@ -127,6 +129,7 @@ exports.HiddenCommands = [
     this.Commands.SETROLERESPONSE,
     this.Commands.SETPINGEXCEPTION,
     this.Commands.SETAUTOVERIFY,
+    this.Commands.SETTRANSACTIONCHANNEL,
     this.Commands.DJS,
 ];
 
@@ -147,6 +150,7 @@ exports.ManagedCommands = [
     this.Commands.SETROLERESPONSE,
     this.Commands.SETPINGEXCEPTION,
     this.Commands.SETAUTOVERIFY,
+    this.Commands.SETTRANSACTIONCHANNEL,
 ];
 
 exports.Permissions = {
@@ -463,7 +467,7 @@ exports.Strings = {
     TIME: "Time:",
 
     // KATE 1 MONTH GIFT STRINGS
-    KATEFIRSTTIMEMSG: "Hi Kate habibi! I see this is your first time using me so I'll explain briefly how I work. By default I submit all DM's to a channel in Rutgers Esports but because you are Kate, your DM's aren't logged anywhere. Your identity is saved by user ID, so even if you change your username or unique name I will always recognize you. If you want to talk to me, just say \"hey\". To stop talking to me and have me treat you like other users just say \"bye\".",
+    KATEFIRSTTIMEMSG: "Hi Kate habibi! I see this is your first time using me so I'll explain briefly how I work. By default I submit all DM's to a channel in Rutgers Esports but because you are Kate, your DM's aren't logged anywhere. Your identity is saved by user ID, so even if you change your username or the unique set of numbers at the end of your username, I will always recognize you. If you want to talk to me, just say \"hey\". To stop talking to me and have me treat you like other users just say \"bye\".",
     KATEHELP: "I can send random pictures of Arjun by receiving a message with his name, send random memes if you just send a message with the word \"meme\" and I also respond to \"I love you!\""
 }
 
@@ -492,7 +496,6 @@ exports.HEARTEMOTES = [
     "💕",
     "😍",
 ]
-////////// RUTGERS CHAN /////////////
 
 ////////// SETTINGS STUFF ///////////
 exports.Settings = {
@@ -500,6 +503,7 @@ exports.Settings = {
     ISCHAIN: "chain",
     ISLOG: "log",
     VOTE: "vote",
+    TRANSACTION: "transactions",
 }
 
 exports.SettingsArr = [
@@ -507,6 +511,7 @@ exports.SettingsArr = [
     this.Settings.ISCHAIN,
     this.Settings.ISLOG,
     this.Settings.VOTE,
+    this.Settings.TRANSACTION
 ]
 
 exports.SettingsArrOptions = [
@@ -514,6 +519,7 @@ exports.SettingsArrOptions = [
     "on/off",
     "on/off",
     "on/off",
+    "channel id"
 ]
 // SettingsArr and SettingsArrOptions should be same size
 

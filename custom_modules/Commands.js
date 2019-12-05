@@ -2393,6 +2393,178 @@ exports.setAutoVerifyCommand = function( arguments, msg, client, database, mysql
     });
 }
 
+exports.setTransactionChannelCommand = function( arguments, msg, client, database, mysql, prefix ) {
+    if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
+        msg.react( Constants.Strings.EYEROLL );
+        return;
+    }
+
+    if( (arguments.length == 1 && arguments[0].toLowerCase() != "clear") && arguments.length != 0 ) {
+        Help.helpCommand( [Constants.Commands.SETAUTOVERIFY], msg, false, client, prefix );
+        return;
+    }
+    
+    // set the clearing variable if the first argument is "clear"
+    let clearing = arguments.length >= 1 && arguments[0].toLowerCase() == "clear";
+    let query = "";
+    if( !clearing ) {
+        query = "SELECT * FROM settings WHERE name='transactions';"
+        database.query( query, function( err, results ) {
+            if( results.length == 0 ) {
+                query = "INSERT INTO settings values('transactions', ?, ?, NULL);"
+                query = mysql.format( query, [msg.channel.id, msg.guild.id] );
+                database.query( query, function( err, results ) { if( exports.errHandler( err, msg ) ) return; });
+                msg.channel.send( "Successfully set transaction channel as " + msg.channel );
+            } else
+                msg.channel.send( "A transaction channel has been set already. Use `!settransactionchannel clear` to clear the old one first." );
+        });
+    } else {
+        query = "DELETE FROM settings WHERE name='transactions';";
+        database.query( query, function( err, results ) { if( exports.errHandler( err, msg ) ) return; });
+        msg.channel.send( "Successfully cleared transaction channel." );
+    }
+}
+
+exports.processTransaction = function( msg, database, mysql, client ) {
+    // true represents borrowing, false represents lending, and null represents nothing found so return
+    let helpMessage = `With this interface, you can:
+    * Log borrows/lends.
+    Format: \`borrowing/lending <name of item> @loaner/borrower\`
+    * Record an item as returned. This won't work unless **you** were the one that borrowed the item.
+    Format: \`returning <name of item>\`
+    * Show a list of all your current transactions. The first command will only show unreturned transactions, while the second one shows all transactions.
+    Format: \`transactions\` or \`transactions all\`
+    * For a more detailed list of transactions simply use SQL. Table name is \`rutgersesports.transactions\`.
+    Format: \`!query sql-query\``
+    if( msg.cleanContent.includes( "help" ) ) {
+        msg.channel.send( helpMessage );
+        return;
+    }
+
+    let command = msg.cleanContent.split(" ")
+    let borrowOrLend = null;
+    if( command.length > 0 ) {
+        command = command[0].toLowerCase();
+        if( command.includes("borrow") )
+            borrowOrLend = true;
+        else if( command.includes("lend") || command.includes("loan") )
+            borrowOrLend = false;
+        else
+            borrowOrLend = null;
+    }
+
+    // split by comma after the first word
+    let input = msg.content.split(" ").slice(1);
+    let item = null;
+    if( input.length > 0 ) {
+        if( borrowOrLend != null )
+            item = input.slice(0,input.length-1).join(" ").toLowerCase();
+        else
+            item = input.join(" ").toLowerCase();
+    }
+    let member = msg.mentions.members.first();
+
+    console.log( `command: ${command}
+item: ${item}
+member: ${member}` );
+
+    // borroworlend can't be found or there is no message, check for transaction list request or return
+    if( borrowOrLend == null || borrowOrLend.length == 0 ) {
+        if( command.includes("return") ) {
+            let query = "SELECT * FROM rutgersesports.transactions WHERE borrower=? AND returned=0 AND item=?";
+            query = mysql.format(query, [msg.author.id,item]);
+            if( DEBUG )
+                console.log( "built query: " + query );
+            database.query( query, function( err, results ) { 
+                if( exports.errHandler( err, msg ) ) return;
+                if( results.length == 0 ) {
+                    msg.channel.send( "Item was not found in database." );
+                    return;
+                } else {
+                    query = "UPDATE rutgersesports.transactions SET returned=1 WHERE borrower=? AND item=?";
+                    query = mysql.format(query, [msg.author.id,item]);
+                    if( DEBUG )
+                        console.log( "built query: " + query );
+                    database.query( query, function( err, results ) { if( exports.errHandler( err, msg ) ) return; });
+                    msg.channel.send( "Marked item `" + item + "` as returned by borrower " + msg.member );
+                }
+            });
+        } else if ( command.includes("transaction") ) {
+            let allFlag = item == "all";
+            let query = "";
+            if( !allFlag )
+                query = "SELECT item,loaner,borrower,timestamp FROM rutgersesports.transactions WHERE returned=0 AND (loaner=? OR borrower=?)";
+            else
+                query = "SELECT item,loaner,borrower,returned,timestamp FROM rutgersesports.transactions WHERE (loaner=? OR borrower=?)";
+            
+            query = mysql.format( query, [msg.author.id,msg.author.id] );
+            if( DEBUG )
+                console.log( "built query: " + query );
+            database.query( query, function( err, results ) {
+                if( exports.errHandler( err, msg ) ) return;
+                let relTransactionsStr = allFlag ? "ALL r" : "R";
+                relTransactionsStr += "elevant transactions for " + msg.author.tag;
+                let DMEmbed = new RichEmbed()
+                    .setAuthor( relTransactionsStr, client.user.displayAvatarURL )
+                    .setColor(0xFF0000)
+                    .setThumbnail( msg.author.displayAvatarURL )
+                    .setFooter( Constants.Strings.TIMESTAMP + msg.createdAt );
+                if( results.length == 0 ) {
+                    if( !allFlag )
+                        msg.channel.send( "No transactions for you or all items returned. Use `transactions all` for more details." );
+                    else
+                        msg.channel.send( "No transactions found for you." );
+                } else {
+                    results.forEach(( result ) => {
+                        // assign fields of results to field variables
+                        let item = result.item;
+                        let loaner = msg.guild.members.find( function(member) {
+                            if( member.user.id == result.loaner )
+                                return member;
+                        });
+                        let borrower = msg.guild.members.find( function(member) {
+                            if( member.user.id == result.borrower )
+                                return member;
+                        });
+                        let returned = null;
+                        if( allFlag )
+                            returned = result.returned;
+                        let timestamp = result.timestamp;
+
+                        let detailsStr = `**Loaner:** ${loaner}
+**Borrower:** ${borrower}`;
+                        if( allFlag )
+                            detailsStr += `\n**Returned:** ${returned == 1}`;
+                        detailsStr += `\n**Timestamp:** ${timestamp}`;
+                        DMEmbed.addField( `**Item:** ${item}`, detailsStr );
+                    });
+                    msg.channel.send( DMEmbed );
+                }
+            });
+        }
+    } else {
+        if( item == null || msg.mentions.members.array().length == 0 ) {
+            msg.channel.send( "WRONG FORMAT: Say `help` to get help." );
+            return;
+        } else {
+            let query = "INSERT INTO rutgersesports.transactions values( ?,?,?,0,null )";
+            if( borrowOrLend )
+                query = mysql.format( query, [item,member.user.id,msg.author.id] );
+            else
+                query = mysql.format( query, [item,msg.author.id,member.user.id] );
+            if( DEBUG )
+                console.log( "built query: " + query );
+            database.query( query, function( err, results ) { if( exports.errHandler( err, msg ) ) return; })
+            let outStr = "";
+            if( borrowOrLend )
+                outStr = "Logged a borrow for item `" + item + "` from user " + member + " to " + msg.member;
+            else
+                outStr = "Logged a lend for item `" + item + "` from user " + msg.member + " to " + member;
+            msg.channel.send( outStr );
+        }
+    }
+}
+
 exports.djsCommand = function( arguments, msg, client, database, mysql, prefix ) {
     if( !msg.member.hasPermission( Constants.Permissions.ADMIN ) ) {
         msg.react( Constants.Strings.EYEROLL );
@@ -2600,13 +2772,23 @@ exports.getSettings = function( msg, nm, messageReaction, user, eventType, datab
             else if( isLog.options == "off" )
                 vote = false;
         }
-
+        //////// TRANSACTION CHANNEL PARSE
+        let transactionChannelId = settings.find(function(setting) {
+            if( setting.name == Constants.Settings.TRANSACTION )
+                return setting.options;
+        })
+        if( transactionChannelId !== undefined )
+            transactionChannelId = transactionChannelId.options;
+        
+        // place in hashtable
         htSettings.put( "user " + Constants.Settings.PREFIX, prefix );
         htSettings.put( "server " + Constants.Settings.PREFIX, serverPrefix );
         htSettings.put( "server " + Constants.Settings.ISCHAIN, isChain );
         htSettings.put( "server command: ", disabledCommands );
         htSettings.put( "server " + Constants.Settings.ISLOG, log );
         htSettings.put( "server " + Constants.Settings.VOTE, vote );
+        if( transactionChannelId != null )
+            htSettings.put( "transaction ", transactionChannelId );
         if( DEBUG )
             console.log( `Settings, message from user ${msg.author.tag}:
             prefix: ${prefix}
@@ -2614,7 +2796,8 @@ exports.getSettings = function( msg, nm, messageReaction, user, eventType, datab
             chain: ${isChain}
             disabledCommands: ${disabledCommands.join(", ")}
             isLog: ${log}
-            vote: ${vote}` );
+            vote: ${vote}
+            transaction: ${transactionChannelId}` );
         if( eventType == 'message' || eventType == 'messageDelete' )
             client.emit( eventType, msg, htSettings );
         else if( eventType == 'messageUpdate' )

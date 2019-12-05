@@ -128,9 +128,16 @@ Instructions = {
     SETAUTOVERIFYINSTRUCTION: ["Set a message that can be sent to #agreement to auto-verify the user to enter the server. For use at events.",
         "setautoverify <word>",
         "Admin"],
+    SETTRANSACTIONCHANNELINSTRUCTION: ["Set a channel that will be used as the transaction channel. There can only be one of these across in any server the bot is in. Use the command in the channel you want to set.",
+        "settransactionchannel",
+        "Admin"],
     DJSINSTRUCTION: ["Dump API Information.",
         "djs msg.?<api-access>.?<api-access>. ...",
-        "Admin"],
+        "Admin",
+        null,
+        null,
+        null,
+        ["clear"]],
     CHAININSTRUCTION: ["Show longest chain in this server.",
         "chain"],
     SETTINGSINSTRUCTION: ["Change user settings for the bot or server settings if you have the right permissions. See personal and server settings.",
@@ -247,6 +254,9 @@ exports.helpCommand = function( arguments, msg, admin, client, prefix ) {
                 break;
             case Constants.Commands.SETAUTOVERIFY:
                 generateCommandField( embed, Instructions.SETAUTOVERIFYINSTRUCTION, prefix );
+                break;
+            case Constants.Commands.SETTRANSACTIONCHANNEL:
+                generateCommandField( embed, Instructions.SETTRANSACTIONCHANNELINSTRUCTION, prefix );
                 break;
             case Constants.Commands.DJS:
                 generateCommandField( embed, Instructions.DJSINSTRUCTION, prefix );

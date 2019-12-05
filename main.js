@@ -197,6 +197,7 @@ client.on( 'message', (receivedMessage, settings) => {
 	let prefix = settings.get( "user " + Constants.Settings.PREFIX );
 	let isChain = settings.get( "server " + Constants.Settings.ISCHAIN );
 	let disabledCommands = settings.get( "command: " );
+	let transactionChannelId = settings.get( "transaction " );
 
 	// Check if user is in #agreement channel first
 	// this happens before processCommand because we only want the user to be able to use !agree
@@ -321,6 +322,9 @@ client.on( 'message', (receivedMessage, settings) => {
 		}
 	});
 
+	if( receivedMessage.channel.id == transactionChannelId )
+		Commands.processTransaction( receivedMessage, database, mysql, client );
+
 	// Command will be processed if it starts with the designated prefix
     if( receivedMessage.content.startsWith( prefix ) || receivedMessage.content.startsWith( `<@${client.user.id}>` ) )
 		processCommand( receivedMessage, settings );
@@ -341,7 +345,7 @@ client.on( 'message', (receivedMessage, settings) => {
 			&& !samePersonTwice
 			&& secondToLastMessage.author.id != receivedMessage.author.id
 			&& secondToLastMessage.cleanContent == receivedMessage.content
-			&& receivedMessage.content != "") {
+			&& receivedMessage.content != "" ) {
 			////////// CHAIN HIT //////////
 			// add to record of messages in chain
 			if( !htChainMessages.get( receivedMessage.channel.id ) )
@@ -386,35 +390,33 @@ client.on( 'message', (receivedMessage, settings) => {
 			let count = htChainCounter.get( receivedMessage.channel.id );
 			if( count > 2 ) {
 				receivedMessage.react( Constants.Strings.ANGRY );
-				// if( receivedMessage.guild.id == 291367115565301763 ) { 
-					let query = "SELECT * FROM chainHighscores WHERE server=?";
-					query = mysql.format( query, [receivedMessage.guild.id] );
-					if( DEBUG )
-						console.log( "built query: " + query );
-					database.query( query, function( err, results ) {
-						if( Commands.errHandler( err, receivedMessage ) ) return;
-						if( results.length == 0 || results[0].size < count ) {
-							let query = "INSERT INTO chainHighscores values( ?,?,?,?,?,null ) ON DUPLICATE KEY UPDATE channel=?, breaker=?, message=?, size=?";
-							query = mysql.format( query,
-								[
-									receivedMessage.guild.id,
-									receivedMessage.channel.id,
-									receivedMessage.member.user.id,
-									secondToLastMessage.cleanContent,
-									count,
-									receivedMessage.channel.id,
-									receivedMessage.member.user.id,
-									secondToLastMessage.cleanContent,
-									count
-								]
-							);
-							if( DEBUG )
-								console.log( "built query: " + query );
-							database.query( query, function( err, results ) { if( Commands.errHandler( err, receivedMessage ) ) return; });
-							receivedMessage.channel.send( `NEW HIGHSCORE for server \`${receivedMessage.guild.name}\` with message \`${secondToLastMessage.cleanContent}\` of length \`${count}\`!`);
-						}
-					});
-				// }
+				let query = "SELECT * FROM chainHighscores WHERE server=?";
+				query = mysql.format( query, [receivedMessage.guild.id] );
+				if( DEBUG )
+					console.log( "built query: " + query );
+				database.query( query, function( err, results ) {
+					if( Commands.errHandler( err, receivedMessage ) ) return;
+					if( results.length == 0 || results[0].size < count ) {
+						let query = "INSERT INTO chainHighscores values( ?,?,?,?,?,null ) ON DUPLICATE KEY UPDATE channel=?, breaker=?, message=?, size=?";
+						query = mysql.format( query,
+							[
+								receivedMessage.guild.id,
+								receivedMessage.channel.id,
+								receivedMessage.member.user.id,
+								secondToLastMessage.cleanContent,
+								count,
+								receivedMessage.channel.id,
+								receivedMessage.member.user.id,
+								secondToLastMessage.cleanContent,
+								count
+							]
+						);
+						if( DEBUG )
+							console.log( "built query: " + query );
+						database.query( query, function( err, results ) { if( Commands.errHandler( err, receivedMessage ) ) return; });
+						receivedMessage.channel.send( `NEW HIGHSCORE for server \`${receivedMessage.guild.name}\` with message \`${secondToLastMessage.cleanContent}\` of length \`${count}\`!`);
+					}
+				});
 			}
 			htChainMessages.remove( receivedMessage.channel.id );
 			htChainCounter.remove( receivedMessage.channel.id );
@@ -559,7 +561,7 @@ client.on( "presenceUpdate", (oldGuildMember, newGuildMember) => {
 });
 
 client.on( "typingStart", (channel, user) => {
-	if( channel.name == "shitposting" && user.id == "144264540484403200" && !isTiffanyTimerSet ) {
+	if( channel.name == "shitposting2" && user.id == "144264540484403200" && !isTiffanyTimerSet ) {
 		channel.send( "`( ´･ω･)っ✂╰⋃╯`" );
 		isTiffanyTimerSet = true;
 		let hours = 0;
@@ -921,6 +923,10 @@ function processCommand( receivedMessage, htSettings ) {
 	let disabledCommands = htSettings.get( "server command: " );
 	if( disabledCommands.includes(Constants.Commands.EXECUTE) )
 		disabledCommands.push( Constants.CommandSynonyms.EXEC );
+	if( disabledCommands.includes(Constants.Commands.COMMAND ) ) {
+		disabledCommands.push( Constants.CommandSynonyms.ADDCOMMAND );
+		disabledCommands.push( Constants.CommandSynonyms.DELETECOMMAND );
+	}
 	let isManagedServer = Commands.isManagedServer( receivedMessage.guild );
 	
 	// get second to last message
@@ -954,6 +960,7 @@ function processCommand( receivedMessage, htSettings ) {
     console.log( "Received Command: " + command )
 	console.log( "Args: " + argumentCommandsClean )
 
+	// agreement stuff
 	if( receivedMessage.channel.name == Constants.Strings.AGREEMENT ) {
 		let query = `SELECT word FROM autoverify`;
 		if( DEBUG )
@@ -968,10 +975,9 @@ function processCommand( receivedMessage, htSettings ) {
 				Commands.agreeCommand( Mailgun, API_Keys.mailgun_domain, argumentCommandsRemovePunctuation, receivedMessage, htNewMembers, 1 );
 		})
 		return;
-		
 	}
 	
-	if( !receivedMessage.member.hasPermission(Constants.Permissions.ADMIN) && disabledCommands.includes(command) ) {
+	if( !receivedMessage.member.hasPermission(Constants.Permissions.KICKMEMBERS) && disabledCommands.includes(command) ) {
 		receivedMessage.channel.send( `The command \`${prefix+command}\` is disabled.`)
 		return;
 	} else if( receivedMessage.member.hasPermission(Constants.Permissions.ADMIN) && disabledCommands.includes(command) )
@@ -1139,6 +1145,9 @@ function processCommand( receivedMessage, htSettings ) {
 		case Constants.Commands.SETAUTOVERIFY:
 			Commands.setAutoVerifyCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
+		case Constants.Commands.SETTRANSACTIONCHANNEL:
+			Commands.setTransactionChannelCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
+			break;
 		case Constants.Commands.DJS:
 			Commands.djsCommand( argumentCommands, receivedMessage, client, database, mysql, prefix );
 			break;
@@ -1150,8 +1159,6 @@ function processCommand( receivedMessage, htSettings ) {
 				receivedMessage.channel.send( `Your prefix is ${prefix}` );
 				break;
 			}
-			// if( secondToLastMessage )
-            //     processCommand( secondToLastMessage, htSettings );
 			break;
 		default:
 			let query = `SELECT message FROM commands WHERE name=\'${command}\' AND request_id=0  AND server_id=${receivedMessage.guild.id}`;
@@ -1199,11 +1206,7 @@ function reroll( msg ) {
 		if( random < 0.9 )
 			msg.channel.send( 'I hit that fat reroll' );
 		else
-			msg.channel.send({
-				files: [
-					'resources/reroll.png'
-				]
-			})
+			msg.channel.send({ files: [ 'resources/reroll.png' ] });
 	}
 }
 
