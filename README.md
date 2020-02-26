@@ -1,3 +1,6 @@
+# DEPRECATED
+This bot is deprecated. Please use the complete rewrite listed [here](https://github.com/sriRacha21/Rutgers-kun3).
+
 # Rutgers Esports Discord Bot
 This is the Bitbucket/Github Repository for the Rutgers Esports Discord Bot, whose rewrite is done!
 
